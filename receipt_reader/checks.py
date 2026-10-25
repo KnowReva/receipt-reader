@@ -45,6 +45,25 @@ def drop_impossible_taxes(r: dict) -> list[str]:
     return notes
 
 
+def drop_unprinted_tax(r: dict) -> list[str]:
+    """On a Canadian or US receipt (tax added on top), remove a tax the receipt itself shows can't be
+    there: the subtotal equals the total and the items add up to it, so nothing was added. Models
+    sometimes fill the tax field anyway (the Walmart scan: 3.74 on tax-free groceries, twice).
+    A tax line that says "incl." is left alone. Returns notes on what was removed."""
+    taxes = r.get("taxes") or []
+    if r.get("currency") not in TAX_ADDED or not taxes or any(INCL.search(str(t.get("name", ""))) for t in taxes):
+        return []
+    total, subtotal = money(r.get("total")), money(r.get("subtotal"))
+    items = [money(i.get("amount")) for i in r.get("items") or []]
+    if not total or subtotal is None or not items or None in items:
+        return []
+    if close(subtotal, total) and close(round(sum(items), 2), total):
+        r["taxes"] = []
+        named = ", ".join(f"{t.get('name', 'tax')} {t.get('amount')}" for t in taxes)
+        return [f"ignored \"{named}\": the items, subtotal and total are all {total:.2f}, so no tax was added"]
+    return []
+
+
 def problems(r: dict, today: dt.date | None = None, file_day: dt.date | None = None) -> list[str]:
     """Everything that doesn't add up (empty: the receipt checks out). file_day: when the photo was taken
     (or the file saved): a receipt dated much earlier usually means a misread year ("26" read as 2023)."""

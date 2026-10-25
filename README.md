@@ -115,7 +115,9 @@ five mistakes the practice set never showed. All five are now handled:
   gets a second look;
 - read from the picture, the shop was right but a **tax of 3.74 appeared** on a receipt that prints no
   tax amount, and passed as "tax included in the prices". Canadian and US receipts add tax on top, so
-  an included tax on a CAD or USD receipt is now flagged unless the receipt says "incl.".
+  an included tax on a CAD or USD receipt is now flagged unless the receipt says "incl.". The second
+  look repeated the 3.74, so when the items, subtotal and total all agree (no room for a tax), code
+  removes it and says so in `notes`.
 
 The final reading of that receipt was right in every field.
 

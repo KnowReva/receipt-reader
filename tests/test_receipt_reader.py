@@ -335,8 +335,14 @@ def test_a_made_up_included_tax_on_a_canadian_receipt_is_caught(photo):
     assert checks.problems(dict(made_up, taxes=[]), TODAY) == []
     assert checks.problems(dict(made_up, taxes=[{"name": "GST incl.", "amount": 1.86}]), TODAY) == []  # it says so
     assert checks.problems(dict(made_up, currency="AUD", taxes=[{"name": "GST", "amount": 3.54}]), TODAY) == []
-    r = reader.read(photo, chat=stand_in(made_up, dict(made_up, taxes=[])), today=TODAY)
-    assert r["status"] == "ok" and r["taxes"] == []
+    # The real run: the second look repeated the 3.74. Items, subtotal and total all say 38.96, so code
+    # removes it and says so (only on CAD/USD, only when all three agree, never an "incl." line).
+    r = reader.read(photo, chat=stand_in(made_up), today=TODAY)
+    assert r["status"] == "ok" and r["taxes"] == [] and "no tax was added" in r["notes"][0]
+    no_subtotal = dict(made_up, subtotal=None)
+    assert reader.read(photo, chat=stand_in(no_subtotal), today=TODAY)["status"] == "check"  # not proven: flagged
+    euro = dict(made_up, currency="EUR", taxes=[{"name": "MwSt", "amount": 3.74}])
+    assert checks.drop_unprinted_tax(euro) == [] and euro["taxes"]
 
 
 def test_a_broken_or_cut_off_answer_gets_the_second_look(photo, monkeypatch):
