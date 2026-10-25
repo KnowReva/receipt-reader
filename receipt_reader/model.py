@@ -24,6 +24,7 @@ def chat(messages: list[dict], schema: dict, model: str = DEFAULT_MODEL, url: st
         "messages": messages,
         "format": schema,  # structured outputs: the answer must match this JSON schema
         "stream": False,
+        "think": False,  # thinking models (gemma4, qwen3...) answer straight away: many times faster
         "options": {"temperature": 0},  # the same receipt should give the same answer every time
     }
     request = urllib.request.Request(f"{url.rstrip('/')}/api/chat", data=json.dumps(body).encode(),
@@ -31,12 +32,16 @@ def chat(messages: list[dict], schema: dict, model: str = DEFAULT_MODEL, url: st
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
             reply = json.loads(response.read())
+    except TimeoutError:
+        raise ModelError(f"Ollama took longer than {timeout:.0f} seconds; try a smaller model (--model qwen2.5vl:3b)") from None
     except urllib.error.HTTPError as e:
         detail = e.read().decode(errors="ignore")[:300]
         if e.code == 404 and "not found" in detail:
             raise ModelError(f"Ollama doesn't have the model '{model}' yet. Run: ollama pull {model}") from None
         raise ModelError(f"Ollama answered {e.code}: {detail}") from None
     except urllib.error.URLError as e:
+        if isinstance(e.reason, TimeoutError):
+            raise ModelError(f"Ollama took longer than {timeout:.0f} seconds; try a smaller model (--model qwen2.5vl:3b)") from None
         raise ModelError(f"Can't reach Ollama at {url} ({e.reason}). Is it running? Try: ollama serve") from None
     try:
         return json.loads(reply["message"]["content"])

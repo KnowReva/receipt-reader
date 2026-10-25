@@ -153,6 +153,7 @@ def test_the_request_ollama_gets(monkeypatch):
     assert got["total"] == 17.26 and sent["url"] == "http://x:1/api/chat"
     assert sent["body"]["format"] == {"type": "object"} and sent["body"]["options"]["temperature"] == 0
     assert sent["body"]["stream"] is False and sent["body"]["messages"][0]["images"] == ["abc"]
+    assert sent["body"]["think"] is False  # thinking models answer straight away
 
 
 def test_plain_errors_from_ollama(monkeypatch):
@@ -178,3 +179,30 @@ def test_the_command_line(tmp_path, photo, monkeypatch, capsys):
     assert "Maple Corner Grocery 17.26 CAD OK" in capsys.readouterr().out and out.exists()
     assert cli.main(["samples", str(tmp_path / "s"), "--count", "3"]) == 0
     assert len(list((tmp_path / "s").glob("*.json"))) == 3
+
+
+def test_errors_are_counted_apart_from_misreadings(tmp_path):
+    samples.write(tmp_path, count=3)
+    truths = [json.loads(p.read_text()) for p in sorted(tmp_path.glob("*.json"))]
+    calls = {"n": 0}
+
+    def flaky(messages, schema, **kw):
+        calls["n"] += 1
+        if calls["n"] == 2:
+            raise model.ModelError("Ollama took longer than 600 seconds")
+        return truths[0] if calls["n"] == 1 else truths[2]
+
+    said = []
+    s = evaluate.run(tmp_path, chat=flaky, today=TODAY, say=said.append)
+    assert s["receipts"] == 2 and s["errors"] == 1 and s["all_right"] == 2
+    assert any("COULDN'T READ IT (ModelError: Ollama took longer" in x for x in said)
+    assert "Couldn't read 1 (errors, not misreadings)" in evaluate.report(s)
+
+
+def test_a_timeout_is_explained(monkeypatch):
+    def slow(req, timeout):
+        raise TimeoutError()
+
+    monkeypatch.setattr(model.urllib.request, "urlopen", slow)
+    with pytest.raises(model.ModelError, match="smaller model"):
+        model.chat([], {}, timeout=5)

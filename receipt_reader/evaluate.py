@@ -40,18 +40,27 @@ def run(folder: Path, chat=None, today: dt.date | None = None, say=print, **kw) 
     rows = []
     for n, (f, answer) in enumerate(pairs, 1):
         truth = json.loads(answer.read_text())
+        error = ""
         try:
             got = reader.read(f, chat=chat, today=today, **kw)
         except Exception as e:  # noqa: BLE001 - one failure is counted, not fatal
-            got = {"status": "check", "problems": [f"error: {e}"], "seconds": 0}
+            got, error = {"status": "check", "problems": [f"error: {e}"], "seconds": 0}, f"{type(e).__name__}: {e}"
         right = compare(got, truth)
-        rows.append({"file": f.name, "right": right, "status": got["status"], "seconds": got.get("seconds", 0)})
-        say(f"[{n}/{len(pairs)}] {f.name}: {'all right' if all(right.values()) else 'wrong ' + ', '.join(k for k, v in right.items() if not v)}"
-            f" (status {got['status']}, {got.get('seconds', 0)}s)")  # fmt: skip
+        rows.append({"file": f.name, "right": right, "status": got["status"], "seconds": got.get("seconds", 0),
+                     "error": error})  # fmt: skip
+        if error:
+            say(f"[{n}/{len(pairs)}] {f.name}: COULDN'T READ IT ({error[:200]})")
+        else:
+            say(f"[{n}/{len(pairs)}] {f.name}: {'all right' if all(right.values()) else 'wrong ' + ', '.join(k for k, v in right.items() if not v)}"
+                f" (status {got['status']}, {got.get('seconds', 0)}s)")  # fmt: skip
     return summary(rows)
 
 
 def summary(rows: list[dict]) -> dict:
+    failed = [r for r in rows if r.get("error")]
+    rows = [r for r in rows if not r.get("error")]  # accuracy is measured on what was read
+    if not rows:
+        return {"receipts": 0, "errors": len(failed), "error_examples": [r["error"] for r in failed[:3]]}
     n = len(rows)
     wrong = [r for r in rows if not all(r["right"].values())]
     out = {"receipts": n,
@@ -60,13 +69,17 @@ def summary(rows: list[dict]) -> dict:
            "wrong": len(wrong),
            "wrong_but_flagged": sum(r["status"] == "check" for r in wrong),
            "right_but_flagged": sum(r["status"] == "check" for r in rows if all(r["right"].values())),
-           "seconds_each": round(sum(r["seconds"] for r in rows) / n, 1)}  # fmt: skip
+           "seconds_each": round(sum(r["seconds"] for r in rows) / n, 1),
+           "errors": len(failed), "error_examples": [r["error"] for r in failed[:3]]}  # fmt: skip
     return out
 
 
 def report(s: dict) -> str:
     n = s["receipts"]
-    lines = [f"Receipts: {n}", ""] + [f"  {k:<9} {v}/{n} right ({100 * v / n:.0f}%)" for k, v in s["fields"].items()]
+    errors = [f"Couldn't read {s['errors']} (errors, not misreadings): " + " | ".join(e[:120] for e in s["error_examples"])] if s.get("errors") else []
+    if not n:
+        return "\n".join(errors or ["Nothing was read."])
+    lines = [f"Receipts read: {n}", *errors, ""] + [f"  {k:<9} {v}/{n} right ({100 * v / n:.0f}%)" for k, v in s["fields"].items()]
     lines += ["", f"All five fields right: {s['all_right']}/{n} ({100 * s['all_right'] / n:.0f}%)"]
     if s["wrong"]:
         lines.append(f"Of the {s['wrong']} with a mistake, the arithmetic check flagged {s['wrong_but_flagged']} for you to check.")
