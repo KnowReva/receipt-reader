@@ -3,39 +3,37 @@
 Ollama's "structured outputs" make the model answer in exactly this shape (the `format` field of the
 request), so we never have to dig numbers out of free text."""
 
-CATEGORIES = ["groceries", "restaurant", "fuel", "travel", "office", "utilities", "health", "other"]
+MONEY = {"type": ["number", "null"]}  # null: not printed on the receipt
 
-MONEY = {"type": ["number", "null"]}  # null when the receipt doesn't print it
+ITEM = {"type": "object",
+        "properties": {"description": {"type": "string"},
+                       "quantity": {"type": "number"},
+                       "amount": {"type": "number"}},
+        "required": ["description", "quantity", "amount"]}  # fmt: skip
+TAX = {"type": "object",
+       "properties": {"name": {"type": "string"},
+                      "amount": {"type": "number"}},
+       "required": ["name", "amount"]}  # fmt: skip
+CATEGORIES = ["groceries", "restaurant", "fuel", "travel",
+              "office", "utilities", "health", "other"]  # fmt: skip
 
 SCHEMA = {
     "type": "object",
     "properties": {
         "vendor": {"type": "string"},
-        "date": {"type": "string"},  # asked for as YYYY-MM-DD
-        "currency": {"type": "string"},  # a 3-letter code: CAD, USD, EUR, INR, AUD...
-        "items": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {"description": {"type": "string"}, "quantity": {"type": "number"}, "amount": {"type": "number"}},
-                "required": ["description", "quantity", "amount"],
-            },
-        },
+        "date": {"type": "string"},  # YYYY-MM-DD
+        "currency": {"type": "string"},  # CAD, USD, EUR, INR, AUD...
+        "items": {"type": "array", "items": ITEM},
         "subtotal": MONEY,
-        "taxes": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {"name": {"type": "string"}, "amount": {"type": "number"}},
-                "required": ["name", "amount"],
-            },
-        },
+        "taxes": {"type": "array", "items": TAX},
         "tip": MONEY,
         "total": {"type": "number"},
         "payment_method": {"type": "string"},
         "category": {"type": "string", "enum": CATEGORIES},
     },
-    "required": ["vendor", "date", "currency", "items", "subtotal", "taxes", "tip", "total", "payment_method", "category"],
+    "required": ["vendor", "date", "currency", "items",
+                 "subtotal", "taxes", "tip", "total",
+                 "payment_method", "category"],  # fmt: skip
 }
 
 PROMPT = """Read this receipt or invoice and return its details as JSON.

@@ -1,6 +1,7 @@
 """Reading one receipt: ask the model, check the answer, and ask once more if it doesn't add up."""
 
 import datetime as dt
+import json
 import time
 from pathlib import Path
 
@@ -8,8 +9,13 @@ from . import checks, files, model
 from .schema import PROMPT, SCHEMA
 
 
+# Ollama's documentation advises giving the schema in the prompt too, "to ground the model's response".
+SCHEMA_TEXT = "\n\nAnswer with JSON that matches this schema:\n" + json.dumps(SCHEMA)
+
+
 def ask(content: dict, extra: str = "", chat=None, **kw) -> dict:
     chat = chat or model.chat
+    extra = SCHEMA_TEXT + extra
     if "text" in content:
         message = {"role": "user", "content": f"{PROMPT}{extra}\n\nTHE RECEIPT (text from a PDF):\n{content['text'][:12000]}"}
     else:
