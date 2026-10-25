@@ -37,6 +37,7 @@ def read(path: Path, chat=None, today: dt.date | None = None, currency: str = ""
         r = ask(content, extra, chat=chat, currency=currency, **kw)
         if currency and not re.fullmatch(r"[A-Z]{3}", str(r.get("currency", "")).strip().upper()):
             r["currency"] = currency  # "$" or "" read: your usual currency
+        r["notes"] = checks.drop_impossible_taxes(r)  # registration numbers read as tax
         return r, checks.problems(r, today)
 
     r, found = look()

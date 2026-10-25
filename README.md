@@ -57,6 +57,7 @@ receipt-reader scan ~/Receipts --currency CAD      # your usual currency, for re
 | `vendor`, `category` | category is one of groceries, restaurant, fuel, travel, office, utilities, health, other |
 | `currency`, `subtotal`, `tax`, `tip`, `total` | tax is all tax lines added together |
 | `payment_method` | as printed (card, cash...) |
+| `notes` | anything code corrected by itself, e.g. a store's tax registration number the model read as a tax |
 
 Photos: JPG, PNG, WEBP, TIFF. PDFs: invoices with real text are read as text (fast and exact);
 scanned PDFs are read page by page as images (up to 3 pages). iPhone HEIC photos: export them as

@@ -243,3 +243,17 @@ def test_practice_grocery_receipts_in_canada_have_no_tax_but_print_registration_
     assert grocery and all(json.loads(p.with_suffix(".json").read_text())["taxes"] == [] for p in grocery)
     text = files.load(next(p for p in made if p.name.endswith("-qc.pdf") or p.name.endswith("-on.pdf")))
     assert "RT 0001" in text.get("text", "RT 0001")
+
+
+def test_registration_numbers_read_as_tax_are_dropped_with_a_note(photo, tmp_path):
+    """gemma4 on the real Walmart receipt: both registration numbers as tax, even after a second look."""
+    walmart = dict(GOOD, vendor="Walmart", subtotal=38.96, total=38.96, items=[{"description": "Groceries", "quantity": 1, "amount": 38.96}],
+                   taxes=[{"name": "GST/HST", "amount": 137466199}, {"name": "QST", "amount": 1016551356}])  # fmt: skip
+    r = reader.read(photo, chat=stand_in(walmart), today=TODAY)
+    assert r["status"] == "ok" and r["taxes"] == [] and len(r["notes"]) == 2 and "registration number" in r["notes"][0]
+    output.write_csv([r], tmp_path / "w.csv")
+    row = next(csv.DictReader((tmp_path / "w.csv").read_text().splitlines()))
+    assert row["tax"] == "" and "137466199" in row["notes"] and row["status"] == "ok"
+    # a real tax is never touched
+    keep = dict(GOOD)
+    assert checks.drop_impossible_taxes(keep) == [] and keep["taxes"] == GOOD["taxes"]

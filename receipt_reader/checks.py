@@ -23,6 +23,24 @@ def close(a: float, b: float) -> bool:
     return abs(a - b) <= TOLERANCE
 
 
+def drop_impossible_taxes(r: dict) -> list[str]:
+    """Remove "tax" lines that can't be taxes on this receipt: more than the total, or a whole number
+    of 7 digits or more (a store's tax registration number, e.g. "GST/HST 137466199 RT 0001").
+    Returns notes on what was removed."""
+    total = money(r.get("total")) or 0
+    kept, notes = [], []
+    for t in r.get("taxes") or []:
+        amount = money(t.get("amount"))
+        looks_like_id = amount is not None and amount == int(amount) and abs(amount) >= 1_000_000
+        if amount is not None and (looks_like_id or (total and amount > total)):
+            notes.append(f"ignored \"{t.get('name', 'tax')} {t.get('amount')}\": a registration number or "
+                         f"other figure, not a tax on a total of {total:.2f}")  # fmt: skip
+        else:
+            kept.append(t)
+    r["taxes"] = kept
+    return notes
+
+
 def problems(r: dict, today: dt.date | None = None) -> list[str]:
     """Everything that doesn't add up (empty: the receipt checks out)."""
     today = today or dt.date.today()

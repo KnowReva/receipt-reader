@@ -7,7 +7,7 @@ from pathlib import Path
 from .checks import money
 
 COLUMNS = ["file", "status", "problems", "date", "vendor", "category", "currency", "subtotal", "tax", "tip",
-           "total", "payment_method"]  # fmt: skip
+           "total", "payment_method", "notes"]  # fmt: skip
 
 
 def row(r: dict) -> dict:
@@ -16,7 +16,8 @@ def row(r: dict) -> dict:
             "date": r.get("date", ""), "vendor": r.get("vendor", ""), "category": r.get("category", ""),
             "currency": r.get("currency", ""), "subtotal": money(r.get("subtotal")) if r.get("subtotal") is not None else "",
             "tax": tax if r.get("taxes") else "", "tip": money(r.get("tip")) if r.get("tip") is not None else "",
-            "total": money(r.get("total")), "payment_method": r.get("payment_method", "")}  # fmt: skip
+            "total": money(r.get("total")), "payment_method": r.get("payment_method", ""),
+            "notes": "; ".join(r.get("notes") or [])}  # fmt: skip
 
 
 def write_csv(results: list[dict], path: Path) -> None:
