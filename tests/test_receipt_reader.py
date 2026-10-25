@@ -294,3 +294,29 @@ def test_practice_receipts_say_where_they_are(tmp_path):
     printed = " ".join(str(t) for _, t in r["lines"])
     assert "ABN " in printed and any(s in printed for s in ("NSW", "VIC", "QLD"))
     assert text  # still readable
+
+
+def test_a_phone_scan_with_guessed_text_is_read_from_the_picture(tmp_path, monkeypatch):
+    """The real Walmart receipt came as an Adobe Scan PDF: a photo plus text the app guessed ("Walmartsa").
+    Read as text, the shop came out as an item, "RED CARROT". Now the picture goes to the model."""
+    samples.write(tmp_path, count=10)
+    scan = tmp_path / "receipt-05-in.pdf"  # a page that is one picture
+    guessed = "Walmartsa How did we do today? SURVEY.WALMART.CA\nRED CARROT 686201966610 $2.97 D\nTOTAL $38.96"
+    monkeypatch.setattr(files, "pdf_text", lambda p: guessed)
+    assert files.scanned(scan) and not files.scanned(tmp_path / "receipt-10-eu.pdf")
+    content = files.load(scan)
+    assert content["images"] and content["scan_text"] == guessed and "text" not in content
+    chat = stand_in(GOOD)
+    reader.read(scan, chat=chat, today=TODAY)
+    msg = chat.calls[0]["messages"][0]
+    assert msg["images"] and "TEXT A SCANNER APP GUESSED" in msg["content"] and "Walmartsa" in msg["content"]
+
+
+def test_a_shop_name_that_is_one_of_the_items_gets_a_second_look(photo):
+    item_as_shop = dict(GOOD, vendor="EGGS")
+    assert checks.problems(item_as_shop, TODAY) == ["the shop name 'EGGS' is one of the items: check the shop"]
+    assert checks.problems(dict(GOOD, vendor=""), TODAY) == ["no shop name"]
+    chat = stand_in(item_as_shop, dict(GOOD, vendor="Walmart"))
+    r = reader.read(photo, chat=chat, today=TODAY)
+    assert r["status"] == "ok" and r["vendor"] == "Walmart"
+    assert "check the shop" in chat.calls[1]["messages"][0]["content"]

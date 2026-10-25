@@ -60,7 +60,9 @@ receipt-reader scan ~/Receipts --currency CAD      # your usual currency, for re
 | `notes` | anything code corrected by itself, e.g. a store's tax registration number the model read as a tax |
 
 Photos: JPG, PNG, WEBP, TIFF. PDFs: invoices with real text are read as text (fast and exact);
-scanned PDFs are read page by page as images (up to 3 pages). iPhone HEIC photos: export them as
+scanned PDFs are read page by page as images (up to 3 pages). PDFs from phone scanner apps (Adobe Scan,
+Microsoft Lens...) carry text the app guessed from the photo, with mistakes, so they are read as images
+too, with that text as a hint. iPhone HEIC photos: export them as
 JPG first.
 
 Settings: `--model` (or `RECEIPT_MODEL`), `--url` (or `OLLAMA_URL`, default
@@ -96,14 +98,18 @@ as real ones do. The arithmetic check can't catch a wrong currency, so use `--cu
 receipts. Time: about 100 seconds a receipt. With the model's "thinking" left on, it was 216.
 
 **On a real receipt** (a crumpled Walmart grocery receipt from Kitchener, Ontario), testing found
-three mistakes the practice set never showed. All three are now handled:
+four mistakes the practice set never showed. All four are now handled:
 
 - the model read the store's GST/HST and QST **registration numbers** as tax amounts. Code now drops
   any "tax" bigger than the total, or a whole number of 7+ digits, and says so in the `notes` column;
 - a check for tax included in prices accepted **any** tax. Taxes now have limits (included at most
   22% of the total, added at most 30%);
 - one reading turned the receipt's **"10/17/26" into 2023**. A date more than a year before the photo
-  was taken now gets a second look, and is marked CHECK if it stays.
+  was taken now gets a second look, and is marked CHECK if it stays;
+- the same receipt **scanned with Adobe Scan** came out with the shop as "RED CARROT", one of the items.
+  The PDF carried text the app had guessed ("Walmart" as "Walmartsa", mixed with survey ads), and that
+  text was all the model saw. Scans are now read from the picture, and a shop name that matches an item
+  gets a second look.
 
 The final reading of that receipt was right in every field.
 

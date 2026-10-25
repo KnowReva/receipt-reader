@@ -22,7 +22,10 @@ def ask(content: dict, extra: str = "", chat=None, currency: str = "", **kw) -> 
     if "text" in content:
         message = {"role": "user", "content": f"{PROMPT}{extra}\n\nTHE RECEIPT (text from a PDF):\n{content['text'][:12000]}"}
     else:
-        message = {"role": "user", "content": PROMPT + extra, "images": content["images"]}
+        hint = ("\n\nTEXT A SCANNER APP GUESSED FROM THIS PHOTO (it misreads letters and digits, and mixes in ads "
+                "and survey text: trust the image, use this only to help read it):\n" + content["scan_text"][:6000]
+                if content.get("scan_text") else "")  # fmt: skip
+        message = {"role": "user", "content": PROMPT + extra + hint, "images": content["images"]}
     return chat([message], SCHEMA, **kw)
 
 

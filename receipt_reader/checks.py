@@ -60,6 +60,11 @@ def problems(r: dict, today: dt.date | None = None, file_day: dt.date | None = N
                          " check the year")  # fmt: skip
     except ValueError:
         found.append(f"date '{r.get('date', '')}' isn't a date (YYYY-MM-DD)")
+    vendor = _name(r.get("vendor"))
+    if not vendor:
+        found.append("no shop name")
+    elif any(vendor == _name(i.get("description")) for i in r.get("items") or []):
+        found.append(f"the shop name '{r.get('vendor')}' is one of the items: check the shop")
     if not re.fullmatch(r"[A-Z]{3}", str(r.get("currency", ""))):
         found.append(f"currency '{r.get('currency', '')}' isn't a 3-letter code")
     items = [money(i.get("amount")) for i in r.get("items") or []]
@@ -91,6 +96,10 @@ def problems(r: dict, today: dt.date | None = None, file_day: dt.date | None = N
         found.append(f"{'subtotal' if subtotal is not None else 'items'} {base:.2f} + tax {taxes:.2f}"
                      f"{f' + tip {tip:.2f}' if tip else ''} = {base + taxes + tip:.2f}, not the total {total:.2f}")  # fmt: skip
     return found
+
+
+def _name(s) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", str(s or "").lower()).strip()
 
 
 def checked(r: dict) -> bool:
