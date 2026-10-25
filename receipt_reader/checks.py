@@ -52,7 +52,17 @@ def problems(r: dict, today: dt.date | None = None) -> list[str]:
     # GST in Australia: the receipt shows "incl." and the items add up to the total).
     added = close(round(base + taxes + tip, 2), total) if total and base is not None else True
     included = bool(taxes) and close(round(base + tip, 2), total) if total and base is not None else False
-    if total and base is not None and not (added or included):
+    # Taxes have limits: tax included in the prices is at most about 22% of the total (VAT of 27%,
+    # the highest anywhere, is 21% of a tax-included price); tax added on top at most about 30% of the
+    # subtotal (India's highest GST is 28%). More means something else was read as tax, such as the
+    # store's tax registration number.
+    if included and total and taxes > 0.22 * total:
+        included = False
+        found.append(f"tax {taxes:.2f} can't be included in a total of {total:.2f} (that would be "
+                     f"{100 * taxes / total:.0f}%): check the tax lines")  # fmt: skip
+    elif added and base and taxes > 0.30 * base:
+        found.append(f"tax {taxes:.2f} is more than 30% of {base:.2f}: check the tax lines")
+    if total and base is not None and not (added or included) and not any(p.startswith("tax ") for p in found):
         found.append(f"{'subtotal' if subtotal is not None else 'items'} {base:.2f} + tax {taxes:.2f}"
                      f"{f' + tip {tip:.2f}' if tip else ''} = {base + taxes + tip:.2f}, not the total {total:.2f}")  # fmt: skip
     return found

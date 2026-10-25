@@ -61,7 +61,10 @@ def make(rng: random.Random, region: str, multiplier: float = 1.0) -> dict:
         items.append({"description": desc, "quantity": qty, "amount": amount})
     sub = round(sum(i["amount"] for i in items), 2)
     taxes, included = [], False
-    if region == "on":
+    zero_rated = region in ("on", "qc") and category == "groceries"  # basic groceries: no tax in Canada
+    if zero_rated:
+        taxes = []
+    elif region == "on":
         taxes = [{"name": "HST 13%", "amount": round(sub * 0.13, 2)}]
     elif region == "qc":
         taxes = [{"name": "TPS/GST 5%", "amount": round(sub * 0.05, 2)}, {"name": "TVQ/QST 9.975%", "amount": round(sub * 0.09975, 2)}]
@@ -96,7 +99,12 @@ def make(rng: random.Random, region: str, multiplier: float = 1.0) -> dict:
     if included:
         for t in taxes:
             lines.append(("pair", (t["name"], f"{sym}{t['amount']:.2f}")))
-    lines += [("", ""), ("", pay), ("center", "THANK YOU")]
+    lines += [("", ""), ("", pay)]
+    if region in ("on", "qc"):  # the store's tax registration numbers: not amounts
+        lines.append(("", f"GST/HST {rng.randint(100000000, 999999999)} RT 0001"))
+        if region == "qc":
+            lines.append(("", f"QST {rng.randint(1000000000, 9999999999)} TQ 0001"))
+    lines.append(("center", "THANK YOU"))
     truth = {"vendor": vendor, "date": day.isoformat(), "currency": currency, "items": items,
              "subtotal": None if included else sub, "taxes": taxes, "tip": tip, "total": total,
              "payment_method": pay, "category": category}  # fmt: skip

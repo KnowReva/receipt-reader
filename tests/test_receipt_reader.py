@@ -215,3 +215,31 @@ def test_your_usual_currency(photo):
     assert "it is CAD" in chat.calls[0]["messages"][0]["content"]
     r = reader.read(photo, chat=stand_in(dict(GOOD, currency="USD")), today=TODAY, currency="CAD")
     assert r["currency"] == "USD"  # a receipt that says otherwise keeps its own
+
+
+def test_a_registration_number_read_as_tax_is_caught(photo):
+    """The real Walmart receipt: groceries with no tax, total 38.96; the model put 23.92 in taxes."""
+    walmart = dict(GOOD, vendor="Walmart", subtotal=38.96, total=38.96,
+                   items=[{"description": d, "quantity": 1, "amount": a} for d, a in
+                          [("YFM POT YLW", 5.94), ("PANEER", 4.98), ("ASTRO YOGURT", 3.67), ("4L HOMO MILK", 11.78),
+                           ("RED CARROT", 2.97), ("GARLIC 3PK", 0.98), ("RED ONION", 3.94), ("TOMATO ROMA", 4.70)]],
+                   taxes=[{"name": "GST/HST", "amount": 23.92}])  # fmt: skip
+    found = checks.problems(walmart, TODAY)
+    assert found and "can't be included in a total of 38.96" in found[0] and len(found) == 1
+    assert checks.problems(dict(walmart, taxes=[]), TODAY) == []  # read right: no tax
+    big = dict(GOOD, taxes=[{"name": "HST", "amount": 9.99}], total=25.26)  # adds up, but 65% tax
+    assert checks.problems(big, TODAY)[0].startswith("tax 9.99 is more than 30%")
+    r = reader.read(photo, chat=stand_in(walmart, dict(walmart, taxes=[])), today=TODAY)
+    assert r["status"] == "ok" and r["taxes"] == []  # the second look, told why, fixes it
+    from receipt_reader.schema import PROMPT
+
+    assert "registration number" in PROMPT
+
+
+def test_practice_grocery_receipts_in_canada_have_no_tax_but_print_registration_numbers(tmp_path):
+    made = samples.write(tmp_path, count=30)
+    grocery = [p for p in made if p.suffix == ".jpg" and json.loads(p.with_suffix(".json").read_text())["category"] == "groceries"
+               and p.stem.endswith(("-on", "-qc"))]
+    assert grocery and all(json.loads(p.with_suffix(".json").read_text())["taxes"] == [] for p in grocery)
+    text = files.load(next(p for p in made if p.name.endswith("-qc.pdf") or p.name.endswith("-on.pdf")))
+    assert "RT 0001" in text.get("text", "RT 0001")

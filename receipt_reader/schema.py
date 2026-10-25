@@ -44,7 +44,9 @@ PROMPT = """Read this receipt or invoice and return its details as JSON.
 - currency: the 3-letter code (CAD, USD, EUR, GBP, INR, AUD...), from the symbol, the country or the tax names.
 - items: every line item with its quantity (1 if not shown) and the line amount as printed.
 - subtotal: before tax, or null if not printed. taxes: each tax line (GST, HST, PST, QST, VAT, CGST, SGST,
-  sales tax...) with its amount; [] if none. tip: or null.
+  sales tax...) with its amount; [] if none. A line like "GST/HST 137466199 RT 0001" or "QST 1016551356 TQ"
+  is the store's tax registration number, not an amount: when the receipt prints no tax amount (groceries
+  are often tax-free), taxes is []. tip: or null.
 - total: the final amount paid. payment_method: cash, card, debit... or "" if not shown.
 - category: the best fit from the list.
 Copy numbers exactly as printed; never guess a number that isn't on the receipt."""
