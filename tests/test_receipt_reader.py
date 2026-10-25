@@ -225,7 +225,9 @@ def test_a_registration_number_read_as_tax_is_caught(photo):
                            ("RED CARROT", 2.97), ("GARLIC 3PK", 0.98), ("RED ONION", 3.94), ("TOMATO ROMA", 4.70)]],
                    taxes=[{"name": "GST/HST", "amount": 23.92}])  # fmt: skip
     found = checks.problems(walmart, TODAY)
-    assert found and "can't be included in a total of 38.96" in found[0] and len(found) == 1
+    assert found and "CAD receipts don't include tax" in found[0] and len(found) == 1
+    in_euros = dict(walmart, currency="EUR", taxes=[{"name": "MwSt incl.", "amount": 23.92}])
+    assert "can't be included in a total of 38.96" in checks.problems(in_euros, TODAY)[0]  # the limit, elsewhere
     assert checks.problems(dict(walmart, taxes=[]), TODAY) == []  # read right: no tax
     big = dict(GOOD, taxes=[{"name": "HST", "amount": 9.99}], total=25.26)  # adds up, but 65% tax
     assert checks.problems(big, TODAY)[0].startswith("tax 9.99 is more than 30%")
@@ -320,3 +322,51 @@ def test_a_shop_name_that_is_one_of_the_items_gets_a_second_look(photo):
     r = reader.read(photo, chat=chat, today=TODAY)
     assert r["status"] == "ok" and r["vendor"] == "Walmart"
     assert "check the shop" in chat.calls[1]["messages"][0]["content"]
+
+
+def test_a_made_up_included_tax_on_a_canadian_receipt_is_caught(photo):
+    """The Walmart scan, read again: shop right, but taxes 3.74 on a receipt that prints no tax amount.
+    The items reached the total, so it passed as tax "included", which Canadian receipts don't do."""
+    made_up = dict(GOOD, vendor="Walmart", subtotal=38.96, total=38.96,
+                   items=[{"description": "4L HOMO MILK", "quantity": 1, "amount": 38.96}],
+                   taxes=[{"name": "HST", "amount": 3.74}])  # fmt: skip
+    found = checks.problems(made_up, TODAY)
+    assert len(found) == 1 and found[0].startswith("tax 3.74 isn't on top of the prices")
+    assert checks.problems(dict(made_up, taxes=[]), TODAY) == []
+    assert checks.problems(dict(made_up, taxes=[{"name": "GST incl.", "amount": 1.86}]), TODAY) == []  # it says so
+    assert checks.problems(dict(made_up, currency="AUD", taxes=[{"name": "GST", "amount": 3.54}]), TODAY) == []
+    r = reader.read(photo, chat=stand_in(made_up, dict(made_up, taxes=[])), today=TODAY)
+    assert r["status"] == "ok" and r["taxes"] == []
+
+
+def test_a_broken_or_cut_off_answer_gets_the_second_look(photo, monkeypatch):
+    def reply(content, reason="stop"):
+        return FakeResponse(json.dumps({"message": {"content": content}, "done_reason": reason}).encode())
+
+    answers = [reply('{"vendor": "Wal', "length"), reply(json.dumps(GOOD))]
+    sent = []
+    monkeypatch.setattr(model.urllib.request, "urlopen", lambda req, timeout: sent.append(json.loads(req.data))
+                        or answers.pop(0))  # fmt: skip
+    r = reader.read(photo, chat=model.chat, today=TODAY)
+    assert r["status"] == "ok" and r["vendor"] == "Maple Corner Grocery" and len(sent) == 2
+    assert "cut off (done_reason: length)" in sent[1]["messages"][0]["content"]
+    assert sent[0]["options"]["num_ctx"] == model.CONTEXT == 8192
+    assert len(sent[1]["messages"]) == 1  # a new single-message request, not a growing conversation
+    monkeypatch.setattr(model.urllib.request, "urlopen", lambda req, timeout: reply("not json"))
+    with pytest.raises(model.BadAnswer, match="wasn't valid JSON"):
+        reader.read(photo, chat=model.chat, today=TODAY)  # broken twice: counted as an error, not a reading
+
+
+def test_two_cents_is_two_cents():
+    assert 1.02 - 1.00 > 0.02  # floating point
+    assert checks.close(1.02, 1.00) and not checks.close(1.03, 1.00)
+
+
+def test_iphone_photos(tmp_path):
+    from pillow_heif import register_heif_opener  # noqa: F401 (installed with receipt-reader)
+
+    p = tmp_path / "IMG_0001.HEIC"
+    Image.new("RGB", (2000, 3000), "white").save(p, format="HEIF")
+    assert files.find([str(tmp_path)]) == [p]
+    with Image.open(io.BytesIO(__import__("base64").b64decode(files.load(p)["images"][0]))) as back:
+        assert back.format == "JPEG" and max(back.size) == 1600

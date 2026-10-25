@@ -1,6 +1,6 @@
 """Turning a file into something the model can read.
 
-  photo (JPG, PNG, WEBP...)   upright (the phone's rotation flag applied), at most 1600 px, as JPEG
+  photo (JPG, PNG, WEBP, HEIC...)  upright (the phone's rotation flag applied), at most 1600 px, as JPEG
   PDF with text in it         the text itself (invoices from software usually have it): faster and exact
   scanned PDF (no text)       each page drawn as an image, like a photo
   scanned PDF with text       a phone scanner app (Adobe Scan, Microsoft Lens...) adds text it guessed
@@ -15,7 +15,15 @@ from pathlib import Path
 
 from PIL import Image, ImageOps
 
-IMAGE_TYPES = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff", ".gif"}
+try:  # iPhone photos (HEIC): the pillow-heif plugin teaches Pillow to open them
+    from pillow_heif import register_heif_opener
+
+    register_heif_opener()
+    HEIC = {".heic", ".heif"}
+except ImportError:  # pragma: no cover - installed with receipt-reader, but optional for your own builds
+    HEIC = set()
+
+IMAGE_TYPES = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff", ".gif"} | HEIC
 MAX_SIDE = 1600  # bigger photos are slower and no more accurate for receipts
 MAX_PAGES = 3  # a receipt or invoice longer than this is unusual
 

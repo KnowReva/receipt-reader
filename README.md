@@ -59,14 +59,17 @@ receipt-reader scan ~/Receipts --currency CAD      # your usual currency, for re
 | `payment_method` | as printed (card, cash...) |
 | `notes` | anything code corrected by itself, e.g. a store's tax registration number the model read as a tax |
 
-Photos: JPG, PNG, WEBP, TIFF. PDFs: invoices with real text are read as text (fast and exact);
+Photos: JPG, PNG, WEBP, TIFF, HEIC. PDFs: invoices with real text are read as text (fast and exact);
 scanned PDFs are read page by page as images (up to 3 pages). PDFs from phone scanner apps (Adobe Scan,
 Microsoft Lens...) carry text the app guessed from the photo, with mistakes, so they are read as images
-too, with that text as a hint. iPhone HEIC photos: export them as
-JPG first.
+too, with that text as a hint. iPhone photos (HEIC) are read as they are.
 
 Settings: `--model` (or `RECEIPT_MODEL`), `--url` (or `OLLAMA_URL`, default
-`http://localhost:11434`).
+`http://localhost:11434`), `RECEIPT_CONTEXT` (the model's context window in tokens, default 8192;
+Ollama's own default is 4096, which a long receipt photo can outgrow).
+
+An answer that isn't complete JSON (cut off, or broken) gets the same one second look as a receipt
+that doesn't add up.
 
 ## Measure it
 
@@ -98,7 +101,7 @@ as real ones do. The arithmetic check can't catch a wrong currency, so use `--cu
 receipts. Time: about 100 seconds a receipt. With the model's "thinking" left on, it was 216.
 
 **On a real receipt** (a crumpled Walmart grocery receipt from Kitchener, Ontario), testing found
-four mistakes the practice set never showed. All four are now handled:
+five mistakes the practice set never showed. All five are now handled:
 
 - the model read the store's GST/HST and QST **registration numbers** as tax amounts. Code now drops
   any "tax" bigger than the total, or a whole number of 7+ digits, and says so in the `notes` column;
@@ -109,7 +112,10 @@ four mistakes the practice set never showed. All four are now handled:
 - the same receipt **scanned with Adobe Scan** came out with the shop as "RED CARROT", one of the items.
   The PDF carried text the app had guessed ("Walmart" as "Walmartsa", mixed with survey ads), and that
   text was all the model saw. Scans are now read from the picture, and a shop name that matches an item
-  gets a second look.
+  gets a second look;
+- read from the picture, the shop was right but a **tax of 3.74 appeared** on a receipt that prints no
+  tax amount, and passed as "tax included in the prices". Canadian and US receipts add tax on top, so
+  an included tax on a CAD or USD receipt is now flagged unless the receipt says "incl.".
 
 The final reading of that receipt was right in every field.
 

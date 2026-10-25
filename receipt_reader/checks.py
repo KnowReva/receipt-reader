@@ -8,6 +8,8 @@ import datetime as dt
 import re
 
 TOLERANCE = 0.02  # two cents of rounding
+TAX_ADDED = {"CAD", "USD"}  # tax is added on top of the prices, not included in them
+INCL = re.compile(r"incl|inkl|inclu", re.I)
 
 
 def money(x) -> float | None:
@@ -20,7 +22,9 @@ def money(x) -> float | None:
 
 
 def close(a: float, b: float) -> bool:
-    return abs(a - b) <= TOLERANCE
+    # Rounded to cents first: in floating point 1.02 - 1.00 is 0.020000000000000018, which would
+    # fail "<= 0.02" exactly at the edge. Every amount is already in cents, so this is exact.
+    return round(abs(a - b), 2) <= TOLERANCE
 
 
 def drop_impossible_taxes(r: dict) -> list[str]:
@@ -86,7 +90,15 @@ def problems(r: dict, today: dt.date | None = None, file_day: dt.date | None = N
     # the highest anywhere, is 21% of a tax-included price); tax added on top at most about 30% of the
     # subtotal (India's highest GST is 28%). More means something else was read as tax, such as the
     # store's tax registration number.
-    if included and total and taxes > 0.22 * total:
+    # Canadian and American receipts add tax on top of the prices; a tax "included" there is almost
+    # always a number the model made up to fill the field (a tax-free grocery receipt read with tax).
+    # Only a tax line that itself says "incl." is believed.
+    if included and r.get("currency") in TAX_ADDED and not any(
+            INCL.search(str(t.get("name", ""))) for t in r.get("taxes") or []):
+        included = False
+        found.append(f"tax {taxes:.2f} isn't on top of the prices, and {r['currency']} receipts don't include tax "
+                     "in them: if no tax amount is printed, taxes is empty")  # fmt: skip
+    elif included and total and taxes > 0.22 * total:
         included = False
         found.append(f"tax {taxes:.2f} can't be included in a total of {total:.2f} (that would be "
                      f"{100 * taxes / total:.0f}%): check the tax lines")  # fmt: skip

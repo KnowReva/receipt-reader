@@ -44,12 +44,21 @@ def read(path: Path, chat=None, today: dt.date | None = None, currency: str = ""
         r["notes"] = checks.drop_impossible_taxes(r)  # registration numbers read as tax
         return r, checks.problems(r, today, file_day)
 
-    r, found = look()
-    if found:  # one second look, told exactly what didn't add up
-        again, again_found = look("\n\nA first reading had these problems: " + "; ".join(found)
-                                  + ". Look again carefully at each number on the receipt.")  # fmt: skip
-        if len(again_found) < len(found):
-            r, found = again, again_found
+    try:
+        r, found = look()
+    except model.BadAnswer as e:  # broken or cut-off JSON: the second look below gets the chance
+        r, found = None, [str(e)]
+    if found:  # one second look: a new, single-message request, told exactly what didn't add up
+        hint = ("\n\nA first reading had these problems: " + "; ".join(found)
+                + ". Look again carefully at each number on the receipt.")  # fmt: skip
+        try:
+            again, again_found = look(hint)
+        except model.BadAnswer:
+            if r is None:
+                raise
+        else:
+            if r is None or len(again_found) < len(found):
+                r, found = again, again_found
     if not found and not checks.checked(r):
         found = ["no items or subtotal read, so the total couldn't be checked"]
     return {"file": str(path), **r, "status": "check" if found else "ok", "problems": found,

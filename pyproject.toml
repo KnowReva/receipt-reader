@@ -10,7 +10,7 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 authors = [{ name = "KnowReva" }]
-dependencies = ["pillow>=10", "pypdf>=4", "pypdfium2>=4"]
+dependencies = ["pillow>=10", "pillow-heif>=0.16", "pypdf>=4", "pypdfium2>=4"]
 
 [project.optional-dependencies]
 test = ["pytest>=8"]

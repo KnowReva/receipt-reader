@@ -10,10 +10,17 @@ import urllib.request
 
 DEFAULT_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 DEFAULT_MODEL = os.environ.get("RECEIPT_MODEL", "qwen2.5vl:7b")
+# The context window holds the prompt, the image's tokens and the answer. Ollama's default is 4096
+# tokens; a long receipt photo plus dozens of items can need more.
+CONTEXT = int(os.environ.get("RECEIPT_CONTEXT", "8192"))
 
 
 class ModelError(RuntimeError):
-    pass
+    """Ollama couldn't be used (not running, no model, too slow): reading stops."""
+
+
+class BadAnswer(ModelError):
+    """Ollama answered, but not with a complete JSON object: worth one more look."""
 
 
 def chat(messages: list[dict], schema: dict, model: str = DEFAULT_MODEL, url: str = DEFAULT_URL,
@@ -25,7 +32,8 @@ def chat(messages: list[dict], schema: dict, model: str = DEFAULT_MODEL, url: st
         "format": schema,  # structured outputs: the answer must match this JSON schema
         "stream": False,
         "think": False,  # thinking models (gemma4, qwen3...) answer straight away: many times faster
-        "options": {"temperature": 0},  # the same receipt should give the same answer every time
+        "options": {"temperature": 0,  # the same receipt should give the same answer every time
+                    "num_ctx": CONTEXT},
     }
     request = urllib.request.Request(f"{url.rstrip('/')}/api/chat", data=json.dumps(body).encode(),
                                      headers={"Content-Type": "application/json"})  # fmt: skip
@@ -43,7 +51,16 @@ def chat(messages: list[dict], schema: dict, model: str = DEFAULT_MODEL, url: st
         if isinstance(e.reason, TimeoutError):
             raise ModelError(f"Ollama took longer than {timeout:.0f} seconds; try a smaller model (--model qwen2.5vl:3b)") from None
         raise ModelError(f"Can't reach Ollama at {url} ({e.reason}). Is it running? Try: ollama serve") from None
+    # "stop" means the model finished. Anything else (e.g. "length") means the answer was cut off, and a
+    # cut-off answer is broken JSON, or worse, valid JSON with the last items missing.
+    reason = reply.get("done_reason") or "stop"
+    if reason != "stop":
+        raise BadAnswer(f"the model's answer was cut off (done_reason: {reason}); a bigger context may help: "
+                        f"RECEIPT_CONTEXT={CONTEXT * 2}")  # fmt: skip
     try:
-        return json.loads(reply["message"]["content"])
-    except (KeyError, json.JSONDecodeError) as e:
-        raise ModelError(f"The model's answer wasn't valid JSON ({e})") from None
+        answer = json.loads(reply["message"]["content"])
+    except (KeyError, TypeError, json.JSONDecodeError) as e:
+        raise BadAnswer(f"the model's answer wasn't valid JSON ({e})") from None
+    if not isinstance(answer, dict):
+        raise BadAnswer("the model's answer wasn't a JSON object")
+    return answer
