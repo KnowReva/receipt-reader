@@ -32,13 +32,14 @@ def read(path: Path, chat=None, today: dt.date | None = None, currency: str = ""
     began = time.monotonic()
     currency = currency.strip().upper()
     content = files.load(path)
+    file_day = files.taken_on(path)
 
     def look(extra: str = "") -> tuple[dict, list[str]]:
         r = ask(content, extra, chat=chat, currency=currency, **kw)
         if currency and not re.fullmatch(r"[A-Z]{3}", str(r.get("currency", "")).strip().upper()):
             r["currency"] = currency  # "$" or "" read: your usual currency
         r["notes"] = checks.drop_impossible_taxes(r)  # registration numbers read as tax
-        return r, checks.problems(r, today)
+        return r, checks.problems(r, today, file_day)
 
     r, found = look()
     if found:  # one second look, told exactly what didn't add up

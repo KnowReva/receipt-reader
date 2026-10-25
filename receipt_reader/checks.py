@@ -41,8 +41,9 @@ def drop_impossible_taxes(r: dict) -> list[str]:
     return notes
 
 
-def problems(r: dict, today: dt.date | None = None) -> list[str]:
-    """Everything that doesn't add up (empty: the receipt checks out)."""
+def problems(r: dict, today: dt.date | None = None, file_day: dt.date | None = None) -> list[str]:
+    """Everything that doesn't add up (empty: the receipt checks out). file_day: when the photo was taken
+    (or the file saved): a receipt dated much earlier usually means a misread year ("26" read as 2023)."""
     today = today or dt.date.today()
     found = []
     total = money(r.get("total"))
@@ -54,6 +55,9 @@ def problems(r: dict, today: dt.date | None = None) -> list[str]:
             found.append(f"date {day} is in the future")
         elif day.year < 2000:
             found.append(f"date {day} looks wrong")
+        elif file_day and (file_day - day).days > 400:
+            found.append(f"date {day} is {(file_day - day).days // 365} year(s) before this photo or file ({file_day}):"
+                         " check the year")  # fmt: skip
     except ValueError:
         found.append(f"date '{r.get('date', '')}' isn't a date (YYYY-MM-DD)")
     if not re.fullmatch(r"[A-Z]{3}", str(r.get("currency", ""))):

@@ -105,7 +105,7 @@ def test_every_practice_answer_adds_up(tmp_path):
     made = samples.write(tmp_path, count=30)
     assert len(made) == 30
     for p in made:
-        assert checks.problems(json.loads(p.with_suffix(".json").read_text()), TODAY) == [], p.name
+        assert checks.problems(json.loads(p.with_suffix(".json").read_text()), dt.date.today(), files.taken_on(p)) == [], p.name
 
 
 # ---------------------------------------------------------------- output
@@ -125,7 +125,7 @@ def test_eval_counts_and_flags(tmp_path):
     wrong_total = dict(truths[1], total=truths[1]["total"] + 10)  # caught by the arithmetic
     wrong_vendor = dict(truths[2], vendor="Something Else")  # adds up, so not caught
     answers = [truths[0], wrong_total, wrong_total, wrong_vendor, truths[3]]
-    s = evaluate.run(tmp_path, chat=stand_in(*answers), today=TODAY, say=lambda m: None)
+    s = evaluate.run(tmp_path, chat=stand_in(*answers), today=dt.date.today(), say=lambda m: None)
     assert s["receipts"] == 4 and s["all_right"] == 2 and s["wrong"] == 2 and s["wrong_but_flagged"] == 1
     assert s["fields"]["vendor"] == 3 and s["fields"]["total"] == 3
     text = evaluate.report(s)
@@ -193,7 +193,7 @@ def test_errors_are_counted_apart_from_misreadings(tmp_path):
         return truths[0] if calls["n"] == 1 else truths[2]
 
     said = []
-    s = evaluate.run(tmp_path, chat=flaky, today=TODAY, say=said.append)
+    s = evaluate.run(tmp_path, chat=flaky, today=dt.date.today(), say=said.append)
     assert s["receipts"] == 2 and s["errors"] == 1 and s["all_right"] == 2
     assert any("COULDN'T READ IT (ModelError: Ollama took longer" in x for x in said)
     assert "Couldn't read 1 (errors, not misreadings)" in evaluate.report(s)
@@ -257,3 +257,21 @@ def test_registration_numbers_read_as_tax_are_dropped_with_a_note(photo, tmp_pat
     # a real tax is never touched
     keep = dict(GOOD)
     assert checks.drop_impossible_taxes(keep) == [] and keep["taxes"] == GOOD["taxes"]
+
+
+def test_a_misread_year_is_caught_against_the_photos_date(photo):
+    """The real Walmart receipt says 10/17/26; one reading gave 2023-10-17."""
+    import os
+
+    os.utime(photo, (dt.datetime(2026, 10, 25).timestamp(),) * 2)
+    assert files.taken_on(photo) == dt.date(2026, 10, 25)
+    misread = dict(GOOD, date="2023-10-17")
+    found = checks.problems(misread, TODAY, files.taken_on(photo))
+    assert found == ["date 2023-10-17 is 3 year(s) before this photo or file (2026-10-25): check the year"]
+    chat = stand_in(misread, dict(GOOD, date="2026-10-17"))
+    r = reader.read(photo, chat=chat, today=TODAY)
+    assert r["status"] == "ok" and r["date"] == "2026-10-17"
+    assert "check the year" in chat.calls[1]["messages"][0]["content"]  # the second look was told why
+    from receipt_reader.schema import PROMPT
+
+    assert '"10/17/26" is 2026-10-17' in PROMPT

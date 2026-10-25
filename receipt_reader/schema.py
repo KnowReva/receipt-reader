@@ -38,7 +38,8 @@ SCHEMA = {
 
 PROMPT = """Read this receipt or invoice and return its details as JSON.
 - vendor: the shop or company name as printed.
-- date: the purchase or invoice date as YYYY-MM-DD. If the receipt writes 03/04/2026, use the country's
+- date: the purchase or invoice date as YYYY-MM-DD. A two-digit year means 20YY: "10/17/26" is 2026-10-17,
+  not 2023 or 1926. If the receipt writes 03/04/2026, use the country's
   usual order (day first in Europe, India and Australia; month first in the USA; Canada uses both, so
   prefer the order the receipt itself makes clear).
 - currency: the 3-letter code (CAD, USD, EUR, GBP, INR, AUD...), from the symbol, the country or the tax names.

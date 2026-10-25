@@ -80,7 +80,7 @@ def make(rng: random.Random, region: str, multiplier: float = 1.0) -> dict:
         taxes = [{"name": "GST incl.", "amount": round(sub / 11, 2)}]
     tip = round(sub * rng.choice([0.15, 0.18, 0.2]), 2) if category == "restaurant" and region in ("on", "qc", "us") and rng.random() < 0.6 else None
     total = round((sub if included else sub + sum(t["amount"] for t in taxes)) + (tip or 0), 2)
-    day = dt.date(2025, 11, 1) + dt.timedelta(days=rng.randint(0, 330))
+    day = dt.date.today() - dt.timedelta(days=rng.randint(1, 330))  # within the last year, like real receipts
     pay = rng.choice(PAY)
     sym = {"CAD": "$", "USD": "$", "EUR": "", "INR": "Rs ", "AUD": "$"}[currency]
     lines = [("center", vendor.upper()), ("center", f"{rng.randint(10, 999)} Main Street"), ("", ""),

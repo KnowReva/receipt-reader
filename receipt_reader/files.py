@@ -6,6 +6,7 @@
 """
 
 import base64
+import datetime as dt
 import io
 from pathlib import Path
 
@@ -62,3 +63,19 @@ def find(paths: list[str]) -> list[Path]:
         elif p.is_file():
             out.append(p)
     return out
+
+
+def taken_on(path: Path) -> dt.date | None:
+    """When a photo was taken (its EXIF date), else when the file was last saved."""
+    try:
+        with Image.open(path) as img:
+            exif = img.getexif()
+            stamp = exif.get_ifd(0x8769).get(36867) or exif.get(306)  # DateTimeOriginal, else DateTime
+        if stamp:
+            return dt.datetime.strptime(str(stamp)[:10], "%Y:%m:%d").date()
+    except Exception:  # noqa: BLE001 - a PDF or a photo without EXIF
+        pass
+    try:
+        return dt.date.fromtimestamp(path.stat().st_mtime)
+    except OSError:
+        return None
