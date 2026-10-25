@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "receipt-reader"
+version = "0.1.0"
+description = "Receipts and invoices to a spreadsheet, read by an AI model on your own computer (Ollama)."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [{ name = "KnowReva" }]
+dependencies = ["pillow>=10", "pypdf>=4", "pypdfium2>=4"]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[project.scripts]
+receipt-reader = "receipt_reader.cli:main"
+
+[project.urls]
+Homepage = "https://knowreva.com/products/"
+Source = "https://github.com/knowreva/receipt-reader"
+
+[tool.setuptools]
+packages = ["receipt_reader"]
