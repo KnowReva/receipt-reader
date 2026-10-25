@@ -2,6 +2,7 @@
 
 import datetime as dt
 import json
+import re
 import time
 from pathlib import Path
 
@@ -13,9 +14,11 @@ from .schema import PROMPT, SCHEMA
 SCHEMA_TEXT = "\n\nAnswer with JSON that matches this schema:\n" + json.dumps(SCHEMA)
 
 
-def ask(content: dict, extra: str = "", chat=None, **kw) -> dict:
+def ask(content: dict, extra: str = "", chat=None, currency: str = "", **kw) -> dict:
     chat = chat or model.chat
-    extra = SCHEMA_TEXT + extra
+    hint = (f"\nIf the receipt doesn't make the currency clear (a plain \"$\" with no country), it is {currency}."
+            if currency else "")  # fmt: skip
+    extra = hint + SCHEMA_TEXT + extra
     if "text" in content:
         message = {"role": "user", "content": f"{PROMPT}{extra}\n\nTHE RECEIPT (text from a PDF):\n{content['text'][:12000]}"}
     else:
@@ -23,17 +26,23 @@ def ask(content: dict, extra: str = "", chat=None, **kw) -> dict:
     return chat([message], SCHEMA, **kw)
 
 
-def read(path: Path, chat=None, today: dt.date | None = None, **kw) -> dict:
-    """The receipt's details plus: file, status ("ok" or "check"), problems, seconds."""
+def read(path: Path, chat=None, today: dt.date | None = None, currency: str = "", **kw) -> dict:
+    """The receipt's details plus: file, status ("ok" or "check"), problems, seconds.
+    currency: your usual currency (e.g. CAD), for receipts that only print "$"."""
     began = time.monotonic()
+    currency = currency.strip().upper()
     content = files.load(path)
-    r = ask(content, chat=chat, **kw)
-    found = checks.problems(r, today)
+
+    def look(extra: str = "") -> tuple[dict, list[str]]:
+        r = ask(content, extra, chat=chat, currency=currency, **kw)
+        if currency and not re.fullmatch(r"[A-Z]{3}", str(r.get("currency", "")).strip().upper()):
+            r["currency"] = currency  # "$" or "" read: your usual currency
+        return r, checks.problems(r, today)
+
+    r, found = look()
     if found:  # one second look, told exactly what didn't add up
-        hint = ("\n\nA first reading had these problems: " + "; ".join(found)
-                + ". Look again carefully at each number on the receipt.")  # fmt: skip
-        again = ask(content, hint, chat=chat, **kw)
-        again_found = checks.problems(again, today)
+        again, again_found = look("\n\nA first reading had these problems: " + "; ".join(found)
+                                  + ". Look again carefully at each number on the receipt.")  # fmt: skip
         if len(again_found) < len(found):
             r, found = again, again_found
     if not found and not checks.checked(r):

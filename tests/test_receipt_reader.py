@@ -206,3 +206,12 @@ def test_a_timeout_is_explained(monkeypatch):
     monkeypatch.setattr(model.urllib.request, "urlopen", slow)
     with pytest.raises(model.ModelError, match="smaller model"):
         model.chat([], {}, timeout=5)
+
+
+def test_your_usual_currency(photo):
+    chat = stand_in(dict(GOOD, currency="$"))
+    r = reader.read(photo, chat=chat, today=TODAY, currency="cad")
+    assert r["currency"] == "CAD" and r["status"] == "ok"
+    assert "it is CAD" in chat.calls[0]["messages"][0]["content"]
+    r = reader.read(photo, chat=stand_in(dict(GOOD, currency="USD")), today=TODAY, currency="CAD")
+    assert r["currency"] == "USD"  # a receipt that says otherwise keeps its own

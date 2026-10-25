@@ -47,6 +47,7 @@ receipt-reader scan photo.jpg invoice.pdf          # files
 receipt-reader scan ~/Receipts -o receipts.csv     # a whole folder (and its subfolders)
 receipt-reader scan ~/Receipts --items items.csv   # also every line item, one per row
 receipt-reader scan ~/Receipts --json all.json     # everything, for your own scripts
+receipt-reader scan ~/Receipts --currency CAD      # your usual currency, for receipts that only print "$"
 ```
 
 | Column | |

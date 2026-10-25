@@ -28,6 +28,7 @@ def main(argv=None) -> int:
     sm.add_argument("folder")
     sm.add_argument("--count", type=int, default=30)
     for s in (scan, ev):
+        s.add_argument("--currency", default="", help="your usual currency (e.g. CAD), for receipts that only print $")
         s.add_argument("--model", default=model.DEFAULT_MODEL, help=f"Ollama model (default {model.DEFAULT_MODEL})")
         s.add_argument("--url", default=model.DEFAULT_URL, help=f"Ollama address (default {model.DEFAULT_URL})")
     a = p.parse_args(argv)
@@ -37,7 +38,7 @@ def main(argv=None) -> int:
         print(f"{len(made)} practice receipts with answers in {a.folder}/. Now: receipt-reader eval {a.folder}")
         return 0
     if a.command == "eval":
-        print(evaluate.report(evaluate.run(Path(a.folder), model=a.model, url=a.url)))
+        print(evaluate.report(evaluate.run(Path(a.folder), model=a.model, url=a.url, currency=a.currency)))
         return 0
 
     paths = files.find(a.paths)
@@ -47,7 +48,7 @@ def main(argv=None) -> int:
     results = []
     for n, path in enumerate(paths, 1):
         try:
-            r = reader.read(path, model=a.model, url=a.url)
+            r = reader.read(path, model=a.model, url=a.url, currency=a.currency)
         except model.ModelError as e:  # Ollama isn't running, or the model isn't there: stop with the fix
             print(f"Stopped: {e}")
             return 1
