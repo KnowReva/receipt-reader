@@ -51,8 +51,9 @@ def run(folder: Path, chat=None, today: dt.date | None = None, say=print, **kw) 
         if error:
             say(f"[{n}/{len(pairs)}] {f.name}: COULDN'T READ IT ({error[:200]})")
         else:
+            why = f": {'; '.join(got.get('problems', []))[:160]}" if got["status"] == "check" else ""
             say(f"[{n}/{len(pairs)}] {f.name}: {'all right' if all(right.values()) else 'wrong ' + ', '.join(k for k, v in right.items() if not v)}"
-                f" (status {got['status']}, {got.get('seconds', 0)}s)")  # fmt: skip
+                f" (status {got['status']}{why}, {got.get('seconds', 0)}s)")  # fmt: skip
     return summary(rows)
 
 

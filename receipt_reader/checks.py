@@ -67,7 +67,10 @@ def problems(r: dict, today: dt.date | None = None, file_day: dt.date | None = N
     subtotal = money(r.get("subtotal"))
     taxes = round(sum(money(t.get("amount")) or 0 for t in r.get("taxes") or []), 2)
     tip = money(r.get("tip")) or 0
-    if subtotal is not None and items_sum is not None and not close(items_sum, subtotal):
+    # tax included in the prices: the items add up to the total, and a "subtotal" may be the amount
+    # before tax (total minus the included tax), which is just as right
+    net_subtotal = subtotal is not None and items_sum is not None and close(items_sum, round(subtotal + taxes, 2))
+    if subtotal is not None and items_sum is not None and not close(items_sum, subtotal) and not net_subtotal:
         found.append(f"items add up to {items_sum:.2f}, not the subtotal {subtotal:.2f}")
     base = subtotal if subtotal is not None else items_sum
     # Tax added on top (North America, India), or already included in the prices (VAT in Europe,

@@ -33,6 +33,10 @@ ITEMS = {
               ("Gift card", 25.00)],
 }  # fmt: skip
 PAY = ["VISA ****4821", "DEBIT", "CASH", "MASTERCARD ****1177"]
+STREETS = ["Main Street", "King Street", "High Street", "Station Road", "Market Square"]
+PLACES = {"on": ["Toronto ON", "Ottawa ON", "Kitchener ON"], "qc": ["Montreal QC", "Quebec QC"],
+          "us": ["Portland OR", "Austin TX", "Columbus OH"], "eu": ["Muenchen", "Lyon", "Rotterdam"],
+          "in": ["Pune MH", "Bengaluru KA", "Jaipur RJ"], "au": ["Sydney NSW", "Melbourne VIC", "Brisbane QLD"]}  # fmt: skip
 
 
 def _font(size):
@@ -83,7 +87,11 @@ def make(rng: random.Random, region: str, multiplier: float = 1.0) -> dict:
     day = dt.date.today() - dt.timedelta(days=rng.randint(1, 330))  # within the last year, like real receipts
     pay = rng.choice(PAY)
     sym = {"CAD": "$", "USD": "$", "EUR": "", "INR": "Rs ", "AUD": "$"}[currency]
-    lines = [("center", vendor.upper()), ("center", f"{rng.randint(10, 999)} Main Street"), ("", ""),
+    town = rng.choice(PLACES[region])
+    lines = [("center", vendor.upper()), ("center", f"{rng.randint(10, 999)} {rng.choice(STREETS)}"), ("center", town)]
+    if region == "au":  # every Australian receipt carries the business's ABN
+        lines.append(("center", f"ABN {rng.randint(10, 99)} {rng.randint(100, 999)} {rng.randint(100, 999)} {rng.randint(100, 999)}"))
+    lines += [("", ""),
              ("", f"Date: {_date_text(region, day)}  {rng.randint(8, 21):02d}:{rng.randint(0, 59):02d}"), ("", "-" * 32)]  # fmt: skip
     for i in items:
         label = f"{i['quantity']} x {i['description']}" if i["quantity"] > 1 else i["description"]

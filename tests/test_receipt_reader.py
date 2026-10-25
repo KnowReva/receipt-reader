@@ -275,3 +275,22 @@ def test_a_misread_year_is_caught_against_the_photos_date(photo):
     from receipt_reader.schema import PROMPT
 
     assert '"10/17/26" is 2026-10-17' in PROMPT
+
+
+def test_a_net_subtotal_on_a_tax_included_receipt_is_right():
+    """VAT or GST included: items 19.90 = total; a subtotal of 18.60 (before the 1.30 tax) is right too."""
+    vat = dict(GOOD, currency="EUR", items=[{"description": "Bread", "quantity": 1, "amount": 19.90}],
+               subtotal=18.60, taxes=[{"name": "MwSt 7% incl.", "amount": 1.30}], total=19.90)
+    assert checks.problems(vat, TODAY) == []
+    assert checks.problems(dict(vat, subtotal=17.00), TODAY)  # but a subtotal that fits nothing is still flagged
+
+
+def test_practice_receipts_say_where_they_are(tmp_path):
+    made = samples.write(tmp_path, count=12)
+    text = files.load(next(p for p in made if p.name.endswith("-au.pdf") or p.suffix == ".pdf"))
+    au = [p for p in made if "-au" in p.name]
+    assert au
+    r = samples.make(__import__("random").Random(1), "au")
+    printed = " ".join(str(t) for _, t in r["lines"])
+    assert "ABN " in printed and any(s in printed for s in ("NSW", "VIC", "QLD"))
+    assert text  # still readable
