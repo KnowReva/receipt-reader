@@ -78,6 +78,35 @@ Australia, with each region's taxes and date formats, a slight tilt, blur and JP
 easier than crumpled real receipts. To test on your own, put a photo next to a `<same name>.json`
 with the correct answer (same fields as the practice ones) and run `eval` on that folder.
 
+### Our results
+
+On an Intel NUC with no graphics card, with `gemma4:26b`, 30 practice receipts (October 2026):
+
+| Field | Right |
+|---|---|
+| date | 30/30 |
+| total | 30/30 |
+| tax | 30/30 |
+| shop | 30/30 |
+| currency | 28/30 |
+
+The two currency misses were Australian practice receipts that printed only "$" and "GST incl.",
+with no city or ABN to tell Australia from Canada or New Zealand. Practice receipts now carry those,
+as real ones do. The arithmetic check can't catch a wrong currency, so use `--currency` for your own
+receipts. Time: about 100 seconds a receipt. With the model's "thinking" left on, it was 216.
+
+**On a real receipt** (a crumpled Walmart grocery receipt from Kitchener, Ontario), testing found
+three mistakes the practice set never showed. All three are now handled:
+
+- the model read the store's GST/HST and QST **registration numbers** as tax amounts. Code now drops
+  any "tax" bigger than the total, or a whole number of 7+ digits, and says so in the `notes` column;
+- a check for tax included in prices accepted **any** tax. Taxes now have limits (included at most
+  22% of the total, added at most 30%);
+- one reading turned the receipt's **"10/17/26" into 2023**. A date more than a year before the photo
+  was taken now gets a second look, and is marked CHECK if it stays.
+
+The final reading of that receipt was right in every field.
+
 ## Inside (about 600 lines of Python)
 
 | File | Job |
