@@ -255,7 +255,7 @@ def test_registration_numbers_read_as_tax_are_dropped_with_a_note(photo, tmp_pat
     assert r["status"] == "ok" and r["taxes"] == [] and len(r["notes"]) == 2 and "registration number" in r["notes"][0]
     output.write_csv([r], tmp_path / "w.csv")
     row = next(csv.DictReader((tmp_path / "w.csv").read_text().splitlines()))
-    assert row["tax"] == "" and "137466199" in row["notes"] and row["status"] == "ok"
+    assert row["tax"] == "0" and "137466199" in row["notes"] and row["status"] == "ok"
     # a real tax is never touched
     keep = dict(GOOD)
     assert checks.drop_impossible_taxes(keep) == [] and keep["taxes"] == GOOD["taxes"]
@@ -376,3 +376,10 @@ def test_iphone_photos(tmp_path):
     assert files.find([str(tmp_path)]) == [p]
     with Image.open(io.BytesIO(__import__("base64").b64decode(files.load(p)["images"][0]))) as back:
         assert back.format == "JPEG" and max(back.size) == 1600
+
+
+def test_no_tax_is_written_as_zero_and_an_unread_file_as_blank():
+    read = output.row({"file": "a.jpg", "status": "ok", **dict(GOOD, taxes=[])})
+    assert read["tax"] == 0 and read["total"] == 17.26
+    unread = output.row({"file": "b.jpg", "status": "check", "problems": ["couldn't read it"]})
+    assert unread["tax"] == "" and unread["subtotal"] == ""

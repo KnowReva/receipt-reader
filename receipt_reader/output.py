@@ -15,7 +15,7 @@ def row(r: dict) -> dict:
     return {"file": r["file"], "status": r["status"], "problems": "; ".join(r.get("problems", [])),
             "date": r.get("date", ""), "vendor": r.get("vendor", ""), "category": r.get("category", ""),
             "currency": r.get("currency", ""), "subtotal": money(r.get("subtotal")) if r.get("subtotal") is not None else "",
-            "tax": tax if r.get("taxes") else "", "tip": money(r.get("tip")) if r.get("tip") is not None else "",
+            "tax": tax if r.get("taxes") or r.get("total") is not None else "",  # no tax lines: 0; unread: blank "tip": money(r.get("tip")) if r.get("tip") is not None else "",
             "total": money(r.get("total")), "payment_method": r.get("payment_method", ""),
             "notes": "; ".join(r.get("notes") or [])}  # fmt: skip
 
