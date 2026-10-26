@@ -408,7 +408,7 @@ def test_fast_reads_the_recognised_text_first_and_the_picture_only_when_it_doesn
                  payment_method="VISA", category="other")  # fmt: skip
     chat = stand_in(right)
     r = reader.read(photo, chat=chat, today=TODAY, fast=True, text_model="small:1b", model="big:26b")
-    assert r["read_by"] == "text" and r["status"] == "ok" and len(chat.calls) == 1
+    assert r["read_by"] == "recognised text" and r["status"] == "ok" and len(chat.calls) == 1
     msg = chat.calls[0]["messages"][0]
     assert "images" not in msg and "text-recognition program" in msg["content"] and chat.calls[0]["model"] == "small:1b"
     wrong = dict(right, total=right["total"] + 10)  # the text reading doesn't add up: the picture
@@ -416,7 +416,10 @@ def test_fast_reads_the_recognised_text_first_and_the_picture_only_when_it_doesn
     r = reader.read(photo, chat=chat, today=TODAY, fast=True, model="big:26b")
     assert r["read_by"] == "picture" and r["status"] == "ok" and chat.calls[1]["messages"][0]["images"]
     assert evaluate.summary([{"right": dict.fromkeys(evaluate.FIELDS, True), "status": "ok", "seconds": 1,
-                              "read_by": "text"}])["by_text"] == 1  # fmt: skip
+                              "read_by": "recognised text"}])["by_text"] == 1  # fmt: skip
+    # a PDF with real text is read as text in every mode: it isn't counted as --fast
+    assert evaluate.summary([{"right": dict.fromkeys(evaluate.FIELDS, True), "status": "ok", "seconds": 1,
+                              "read_by": "text"}])["by_text"] == 0  # fmt: skip
 
 
 def test_fast_without_tesseract_reads_the_picture(photo, monkeypatch):
@@ -457,3 +460,35 @@ def test_categories_learned_from_enough_corrections(tmp_path, monkeypatch):
     few = dict(m, examples=m["examples"][:5])
     assert memory.apply(dict(GOOD, vendor="Esso", items=[{"description": "gasoline"}], category="other", notes=[]),
                         few)["category"] == "other"  # too few corrections yet  # fmt: skip
+
+
+def test_the_date_is_put_in_order_by_code_from_the_printed_date(photo):
+    """The model gave "28/07/2026" (not YYYY-MM-DD), and Australian 03/04 dates in US order."""
+    def r(printed, currency, date="2026-01-01"):
+        x = dict(GOOD, date=date, date_printed=printed, currency=currency)
+        notes = checks.fix_date(x)
+        return x["date"], notes
+
+    assert r("28/07/2026", "INR", "28/07/2026")[0] == "2026-07-28"  # a day over 12: no doubt
+    assert r("07/28/2026", "CAD")[0] == "2026-07-28"
+    assert r("03/04/26", "AUD", "2026-03-04")[0] == "2026-04-03"  # day first in Australia
+    assert r("03/04/2026", "USD", "2026-04-03")[0] == "2026-03-04"  # month first in the USA
+    assert r("03/04/2026", "CAD", "2026-04-03") == ("2026-04-03", [])  # Canada uses both: the model's stands
+    assert r("4 Mar 2026", "EUR", "2026-03-04") == ("2026-03-04", [])  # words: the model's reading stands
+    assert r("31/02/2026", "EUR", "2026-02-28") == ("2026-02-28", [])  # no such day: unchanged
+    date, notes = r("10.17.26", "USD", "2023-10-17")
+    assert date == "2026-10-17" and notes[0].startswith('date 2026-10-17 from "10.17.26" as printed')
+    chat = stand_in(dict(GOOD, date="28/07/2026", date_printed="28/07/2026", currency="INR"))
+    got = reader.read(photo, chat=chat, today=dt.date(2026, 8, 1))
+    assert got["date"] == "2026-07-28" and not any("isn't a date" in p for p in got["problems"])
+    from receipt_reader.schema import PROMPT, SCHEMA
+
+    assert "date_printed" in SCHEMA["required"] and "exactly as printed" in PROMPT
+
+
+def test_eval_details_show_the_wrong_readings(tmp_path):
+    samples.write(tmp_path, count=2)
+    wrong = dict(GOOD, total=999.0)
+    evaluate.run(tmp_path, chat=stand_in(wrong), today=TODAY, say=lambda *a: None, details=tmp_path / "why.json")
+    got = json.loads((tmp_path / "why.json").read_text())
+    assert len(got) == 2 and "total" in got[0]["wrong"] and got[0]["read"]["total"] == 999.0 and "answer" in got[0]

@@ -1,5 +1,14 @@
 # Changes
 
+## 0.3.1 (October 2026)
+
+- Dates are put in order by code from the date as printed (a new field, `date_printed`): a number over 12
+  must be the day; otherwise day first in Europe, India and Australia, month first in the USA; in
+  Canada the model's reading stands. Fixes "28/07/2026" left unconverted and Australian dates read in
+  US order.
+- `eval --details why.json` saves each wrong reading next to the right answer.
+- `eval --fast` counted text PDFs (always read as text) as read from recognised text.
+
 ## 0.3.0 (October 2026)
 
 - `--fast`: Tesseract reads a photo's text first (under a second); the model turns the text into fields,

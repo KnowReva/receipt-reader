@@ -52,14 +52,14 @@ def read(path: Path, chat=None, today: dt.date | None = None, currency: str = ""
                 r = ask(quick, chat=chat, currency=currency, **(dict(kw, model=text_model) if text_model else kw))
                 if currency and not re.fullmatch(r"[A-Z]{3}", str(r.get("currency", "")).strip().upper()):
                     r["currency"] = currency
-                r["notes"] = checks.drop_impossible_taxes(r) + checks.drop_unprinted_tax(r)
+                r["notes"] = checks.drop_impossible_taxes(r) + checks.drop_unprinted_tax(r) + checks.fix_date(r)
                 found = checks.problems(r, today, file_day)
             except model.BadAnswer:
                 found, r = ["broken answer"], {}
             if not found and checks.checked(r):
                 if remember:
                     memory.apply(r)
-                return {"file": str(path), **r, "status": "ok", "problems": [], "read_by": "text",
+                return {"file": str(path), **r, "status": "ok", "problems": [], "read_by": "recognised text",
                         "seconds": round(time.monotonic() - began, 1)}  # fmt: skip
 
     def look(extra: str = "") -> tuple[dict, list[str]]:
@@ -67,6 +67,7 @@ def read(path: Path, chat=None, today: dt.date | None = None, currency: str = ""
         if currency and not re.fullmatch(r"[A-Z]{3}", str(r.get("currency", "")).strip().upper()):
             r["currency"] = currency  # "$" or "" read: your usual currency
         r["notes"] = checks.drop_impossible_taxes(r)  # registration numbers read as tax
+        r["notes"] += checks.fix_date(r)  # the printed date, put in order by code
         r["notes"] += checks.drop_unprinted_tax(r)  # a tax the receipt's own numbers leave no room for
         return r, checks.problems(r, today, file_day)
 

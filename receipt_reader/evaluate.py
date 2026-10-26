@@ -33,11 +33,11 @@ def compare(got: dict, truth: dict) -> dict[str, bool]:
     }
 
 
-def run(folder: Path, chat=None, today: dt.date | None = None, say=print, **kw) -> dict:
+def run(folder: Path, chat=None, today: dt.date | None = None, say=print, details: Path | None = None, **kw) -> dict:
     pairs = [(f, f.with_suffix(".json")) for f in files.find([str(folder)]) if f.with_suffix(".json").exists()]
     if not pairs:
         raise SystemExit(f"No receipts with answer files (<name>.json) in {folder}. Make some: receipt-reader samples {folder}")
-    rows = []
+    rows, wrong = [], []
     for n, (f, answer) in enumerate(pairs, 1):
         truth = json.loads(answer.read_text())
         error = ""
@@ -46,6 +46,8 @@ def run(folder: Path, chat=None, today: dt.date | None = None, say=print, **kw) 
         except Exception as e:  # noqa: BLE001 - one failure is counted, not fatal
             got, error = {"status": "check", "problems": [f"error: {e}"], "seconds": 0}, f"{type(e).__name__}: {e}"
         right = compare(got, truth)
+        if details and not all(right.values()):  # what was read next to the right answer, to see why
+            wrong.append({"file": f.name, "wrong": [k for k, v in right.items() if not v], "read": got, "answer": truth})
         rows.append({"file": f.name, "right": right, "status": got["status"], "seconds": got.get("seconds", 0),
                      "error": error, "read_by": got.get("read_by", "")})  # fmt: skip
         if error:
@@ -54,6 +56,9 @@ def run(folder: Path, chat=None, today: dt.date | None = None, say=print, **kw) 
             why = f": {'; '.join(got.get('problems', []))[:160]}" if got["status"] == "check" else ""
             say(f"[{n}/{len(pairs)}] {f.name}: {'all right' if all(right.values()) else 'wrong ' + ', '.join(k for k, v in right.items() if not v)}"
                 f" (status {got['status']}{why}, {got.get('seconds', 0)}s)")  # fmt: skip
+    if details:
+        details.write_text(json.dumps(wrong, indent=1, ensure_ascii=False, default=str))
+        say(f"The {len(wrong)} wrong reading(s), next to the right answers: {details}")
     return summary(rows)
 
 
@@ -71,8 +76,8 @@ def summary(rows: list[dict]) -> dict:
            "wrong_but_flagged": sum(r["status"] == "check" for r in wrong),
            "right_but_flagged": sum(r["status"] == "check" for r in rows if all(r["right"].values())),
            "seconds_each": round(sum(r["seconds"] for r in rows) / n, 1),
-           "by_text": sum(r.get("read_by") == "text" for r in rows),
-           "by_text_right": sum(r.get("read_by") == "text" and all(r["right"].values()) for r in rows),
+           "by_text": sum(r.get("read_by") == "recognised text" for r in rows),
+           "by_text_right": sum(r.get("read_by") == "recognised text" and all(r["right"].values()) for r in rows),
            "errors": len(failed), "error_examples": [r["error"] for r in failed[:3]]}  # fmt: skip
     return out
 

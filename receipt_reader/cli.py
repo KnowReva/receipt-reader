@@ -26,6 +26,7 @@ def main(argv=None) -> int:
     scan.add_argument("--json", help="also write everything, line items included, to this JSON file")
     ev = sub.add_parser("eval", help="measure accuracy on receipts that have answer files (<name>.json)")
     ev.add_argument("folder")
+    ev.add_argument("--details", help="also save the wrong readings next to the right answers (JSON), to see why")
     le = sub.add_parser("learn", help="remember the shop names and categories you corrected in a scanned CSV")
     le.add_argument("csv")
     sm = sub.add_parser("samples", help="draw practice receipts with their answers")
@@ -53,7 +54,8 @@ def main(argv=None) -> int:
                   "then pip install pytesseract")  # fmt: skip
             return 1
         print(evaluate.report(evaluate.run(Path(a.folder), model=a.model, url=a.url, currency=a.currency,
-                                           fast=a.fast, text_model=a.text_model)))  # fmt: skip
+                                           fast=a.fast, text_model=a.text_model,
+                                           details=Path(a.details) if a.details else None)))  # fmt: skip
         return 0
 
     if a.fast and not _has_tesseract():

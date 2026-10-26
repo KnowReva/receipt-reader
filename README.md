@@ -113,6 +113,7 @@ column. The memory is one file on your computer (`~/.receipt-reader/memory.json`
 ```bash
 receipt-reader samples samples/   # 30 practice receipts with their correct answers
 receipt-reader eval samples/      # how many it reads right, and how many mistakes the check caught
+receipt-reader eval samples/ --details why.json   # also save each wrong reading next to the right answer
 ```
 
 The practice receipts are drawn by code: fictional shops in Canada, the USA, Europe, India and

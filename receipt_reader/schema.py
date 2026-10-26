@@ -22,6 +22,7 @@ SCHEMA = {
     "properties": {
         "vendor": {"type": "string"},
         "date": {"type": "string"},  # YYYY-MM-DD
+        "date_printed": {"type": "string"},  # exactly as on the receipt: code checks the order
         "currency": {"type": "string"},  # CAD, USD, EUR, INR, AUD...
         "items": {"type": "array", "items": ITEM},
         "subtotal": MONEY,
@@ -31,7 +32,7 @@ SCHEMA = {
         "payment_method": {"type": "string"},
         "category": {"type": "string", "enum": CATEGORIES},
     },
-    "required": ["vendor", "date", "currency", "items",
+    "required": ["vendor", "date", "date_printed", "currency", "items",
                  "subtotal", "taxes", "tip", "total",
                  "payment_method", "category"],  # fmt: skip
 }
@@ -39,6 +40,7 @@ SCHEMA = {
 PROMPT = """Read this receipt or invoice and return its details as JSON.
 - vendor: the shop or company name, usually the logo or the first line at the top (a chain's name such as
   Walmart, not the store number). Never a product from the item lines.
+- date_printed: the date exactly as printed on the receipt (e.g. "03/04/26" or "4 Mar 2026").
 - date: the purchase or invoice date as YYYY-MM-DD. A two-digit year means 20YY: "10/17/26" is 2026-10-17,
   not 2023 or 1926. If the receipt writes 03/04/2026, use the country's
   usual order (day first in Europe, India and Australia; month first in the USA; Canada uses both, so

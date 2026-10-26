@@ -64,6 +64,41 @@ def drop_unprinted_tax(r: dict) -> list[str]:
     return []
 
 
+DAY_FIRST = {"EUR", "GBP", "INR", "AUD", "NZD", "CHF", "SEK", "NOK", "DKK", "ZAR", "SGD"}
+MONTH_FIRST = {"USD"}
+
+
+def fix_date(r: dict) -> list[str]:
+    """The date in YYYY-MM-DD, worked out by code from the date as printed: a number over 12 must be the
+    day; otherwise the country's order (day first in Europe, India, Australia...; month first in the
+    USA). Canada uses both: there the model's own reading stands unless a number over 12 decides it.
+    A two-digit year is 20YY. Returns notes on what was changed."""
+    printed = str(r.get("date_printed") or "").strip()
+    m = re.fullmatch(r"(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{2}|\d{4})", printed)
+    if not m:
+        return []
+    a, b, y = int(m[1]), int(m[2]), int(m[3])
+    y = 2000 + y if y < 100 else y
+    if a > 12 and b <= 12:
+        day, month = a, b
+    elif b > 12 and a <= 12:
+        day, month = b, a
+    elif str(r.get("currency", "")).upper() in DAY_FIRST:
+        day, month = a, b
+    elif str(r.get("currency", "")).upper() in MONTH_FIRST:
+        day, month = b, a
+    else:
+        return []  # ambiguous, and a country that writes both: the model's reading stands
+    try:
+        iso = dt.date(y, month, day).isoformat()
+    except ValueError:
+        return []
+    if iso == str(r.get("date", "")):
+        return []
+    before, r["date"] = r.get("date"), iso
+    return [f"date {iso} from \"{printed}\" as printed (the model said {before})"]
+
+
 def problems(r: dict, today: dt.date | None = None, file_day: dt.date | None = None) -> list[str]:
     """Everything that doesn't add up (empty: the receipt checks out). file_day: when the photo was taken
     (or the file saved): a receipt dated much earlier usually means a misread year ("26" read as 2023)."""
