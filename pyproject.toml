@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "receipt-reader"
-version = "0.2.0"
+version = "0.3.0"
 description = "Receipts and invoices to a spreadsheet, read by an AI model on your own computer (Ollama)."
 readme = "README.md"
 license = "MIT"
@@ -14,6 +14,8 @@ dependencies = ["pillow>=10", "pillow-heif>=0.16", "pypdf>=4", "pypdfium2>=4"]
 
 [project.optional-dependencies]
 test = ["pytest>=8"]
+# --fast: Tesseract reads a photo's text first (also install the program: apt install tesseract-ocr)
+fast = ["pytesseract>=0.3"]
 
 [project.scripts]
 receipt-reader = "receipt_reader.cli:main"

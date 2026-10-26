@@ -71,6 +71,43 @@ Ollama's own default is 4096, which a long receipt photo can outgrow).
 An answer that isn't complete JSON (cut off, or broken) gets the same one second look as a receipt
 that doesn't add up.
 
+## Faster: read the text first (`--fast`)
+
+Reading a photo with a vision model takes a minute or two on a computer without a graphics card. Text
+recognition (Tesseract) reads a receipt's text in under a second. With `--fast`, Tesseract reads first
+and the model only turns that text into fields, which is much quicker, even more so with a small text
+model. The arithmetic check still decides: a receipt whose text reading doesn't add up is read from the
+picture as usual.
+
+```bash
+sudo apt install tesseract-ocr          # macOS: brew install tesseract
+pip install pytesseract                 # or: pip install "receipt-reader[fast] @ git+https://github.com/knowreva/receipt-reader"
+receipt-reader scan ~/Receipts --fast
+receipt-reader scan ~/Receipts --fast --text-model qwen3:4b   # a small text model for the text
+receipt-reader eval samples/ --fast     # how many were read from the text alone, how accurately, how fast
+```
+
+Tesseract is run with `--psm 6` (the page as one block of text): with its default layout it left out
+the column of prices on every practice receipt; with 6 it read every total.
+
+Run `eval` with and without `--fast` on the same receipts before you rely on it: the arithmetic catches
+misread numbers, but not a misread shop name or date.
+
+## It learns your corrections
+
+Fix a shop name or a category in the spreadsheet, save it, and tell the tool:
+
+```bash
+receipt-reader scan ~/Receipts -o receipts.csv
+# ...fix "WAL-MART #1007" to "Walmart", "other" to "groceries", save...
+receipt-reader learn receipts.csv
+```
+
+From then on, that shop gets your name and your category. Once you have corrected about 15
+categories, a small word-counting model (naive Bayes) also suggests categories for shops it hasn't
+seen, changing the model's guess only when it is at least 80% sure. Every change is in the `notes`
+column. The memory is one file on your computer (`~/.receipt-reader/memory.json`, or `RECEIPT_MEMORY`).
+
 ## Measure it
 
 ```bash
@@ -121,7 +158,7 @@ five mistakes the practice set never showed. All five are now handled:
 
 The final reading of that receipt was right in every field.
 
-## Inside (about 600 lines of Python)
+## Inside (about 1,000 lines of Python)
 
 | File | Job |
 |---|---|
@@ -132,6 +169,7 @@ The final reading of that receipt was right in every field.
 | `reader.py` | read, check, one second look |
 | `output.py` | CSV and JSON |
 | `evaluate.py`, `samples.py` | accuracy on receipts with known answers |
+| `memory.py` | your corrections: shop names, categories, a small naive Bayes model |
 
 ```bash
 pip install -e ".[test]" && pytest     # the tests use a stand-in model: no Ollama needed

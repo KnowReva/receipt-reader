@@ -1,5 +1,13 @@
 # Changes
 
+## 0.3.0 (October 2026)
+
+- `--fast`: Tesseract reads a photo's text first (under a second); the model turns the text into fields,
+  optionally a smaller one (`--text-model`). A reading that doesn't add up is read from the picture.
+  `eval --fast` reports how many were read from the text alone and how accurately.
+- `receipt-reader learn receipts.csv`: remembers the shop names and categories you corrected; a small
+  naive Bayes model learns your categories once there are enough corrections. Changes are noted.
+
 ## 0.2.0 (October 2026)
 
 What testing on a real receipt taught (see the README's "Our results"):

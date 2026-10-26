@@ -42,12 +42,12 @@ def run(folder: Path, chat=None, today: dt.date | None = None, say=print, **kw) 
         truth = json.loads(answer.read_text())
         error = ""
         try:
-            got = reader.read(f, chat=chat, today=today, **kw)
+            got = reader.read(f, chat=chat, today=today, remember=False, **kw)  # the model alone
         except Exception as e:  # noqa: BLE001 - one failure is counted, not fatal
             got, error = {"status": "check", "problems": [f"error: {e}"], "seconds": 0}, f"{type(e).__name__}: {e}"
         right = compare(got, truth)
         rows.append({"file": f.name, "right": right, "status": got["status"], "seconds": got.get("seconds", 0),
-                     "error": error})  # fmt: skip
+                     "error": error, "read_by": got.get("read_by", "")})  # fmt: skip
         if error:
             say(f"[{n}/{len(pairs)}] {f.name}: COULDN'T READ IT ({error[:200]})")
         else:
@@ -71,6 +71,8 @@ def summary(rows: list[dict]) -> dict:
            "wrong_but_flagged": sum(r["status"] == "check" for r in wrong),
            "right_but_flagged": sum(r["status"] == "check" for r in rows if all(r["right"].values())),
            "seconds_each": round(sum(r["seconds"] for r in rows) / n, 1),
+           "by_text": sum(r.get("read_by") == "text" for r in rows),
+           "by_text_right": sum(r.get("read_by") == "text" and all(r["right"].values()) for r in rows),
            "errors": len(failed), "error_examples": [r["error"] for r in failed[:3]]}  # fmt: skip
     return out
 
@@ -85,5 +87,8 @@ def report(s: dict) -> str:
     if s["wrong"]:
         lines.append(f"Of the {s['wrong']} with a mistake, the arithmetic check flagged {s['wrong_but_flagged']} for you to check.")
     lines.append(f"Correct ones flagged anyway (extra work, not errors): {s['right_but_flagged']}")
+    if s.get("by_text"):
+        lines.append(f"Read from the recognised text alone (--fast): {s['by_text']}/{n}, all five fields right on "
+                     f"{s['by_text_right']} of them; the rest were read from the picture")  # fmt: skip
     lines.append(f"Time: {s['seconds_each']} seconds a receipt on this computer")
     return "\n".join(lines)

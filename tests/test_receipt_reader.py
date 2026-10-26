@@ -383,3 +383,77 @@ def test_no_tax_is_written_as_zero_and_an_unread_file_as_blank():
     assert read["tax"] == 0 and read["total"] == 17.26
     unread = output.row({"file": "b.jpg", "status": "check", "problems": ["couldn't read it"]})
     assert unread["tax"] == "" and unread["subtotal"] == ""
+
+
+def _tesseract():
+    try:
+        import pytesseract
+
+        pytesseract.get_tesseract_version()
+        return True
+    except Exception:  # noqa: BLE001
+        return False
+
+
+@pytest.mark.skipif(not _tesseract(), reason="Tesseract isn't installed")
+def test_fast_reads_the_recognised_text_first_and_the_picture_only_when_it_doesnt_add_up(tmp_path):
+    """--fast: Tesseract reads the practice receipt's text (every total, with --psm 6), the model turns the
+    text into fields, and only a reading that doesn't add up goes on to the picture."""
+    made = samples.write(tmp_path, count=1)
+    photo = next(p for p in made if p.suffix == ".jpg")
+    truth = json.loads(photo.with_suffix(".json").read_text())
+    text = files.recognise(photo)
+    assert f"{truth['total']:.2f}" in text  # the price column is there
+    right = dict(truth, items=truth["items"], subtotal=truth["subtotal"], tip=truth.get("tip"),
+                 payment_method="VISA", category="other")  # fmt: skip
+    chat = stand_in(right)
+    r = reader.read(photo, chat=chat, today=TODAY, fast=True, text_model="small:1b", model="big:26b")
+    assert r["read_by"] == "text" and r["status"] == "ok" and len(chat.calls) == 1
+    msg = chat.calls[0]["messages"][0]
+    assert "images" not in msg and "text-recognition program" in msg["content"] and chat.calls[0]["model"] == "small:1b"
+    wrong = dict(right, total=right["total"] + 10)  # the text reading doesn't add up: the picture
+    chat = stand_in(wrong, right)
+    r = reader.read(photo, chat=chat, today=TODAY, fast=True, model="big:26b")
+    assert r["read_by"] == "picture" and r["status"] == "ok" and chat.calls[1]["messages"][0]["images"]
+    assert evaluate.summary([{"right": dict.fromkeys(evaluate.FIELDS, True), "status": "ok", "seconds": 1,
+                              "read_by": "text"}])["by_text"] == 1  # fmt: skip
+
+
+def test_fast_without_tesseract_reads_the_picture(photo, monkeypatch):
+    monkeypatch.setattr(files, "recognise", lambda path: None)
+    chat = stand_in(GOOD)
+    r = reader.read(photo, chat=chat, today=TODAY, fast=True)
+    assert r["read_by"] == "picture" and chat.calls[0]["messages"][0]["images"]
+
+
+def test_your_corrections_are_remembered(tmp_path, photo, monkeypatch, capsys):
+    """Fix a shop name and a category in receipts.csv, run `learn`, and the next scan uses them."""
+    monkeypatch.setenv("RECEIPT_MEMORY", str(tmp_path / "mem" / "memory.json"))
+    walmart = dict(GOOD, vendor="WAL-MART #1007", category="other")
+    monkeypatch.setattr(model, "chat", stand_in(walmart))
+    out = tmp_path / "receipts.csv"
+    assert cli.main(["scan", str(photo), "-o", str(out)]) == 0
+    text = out.read_text().replace("WAL-MART #1007", "Walmart").replace(",other,", ",groceries,")
+    out.write_text(text)
+    assert cli.main(["learn", str(out)]) == 0
+    assert "Remembered 1 shop name(s) and 1 category change(s)" in capsys.readouterr().out
+    r = reader.read(photo, chat=stand_in(dict(walmart, vendor="Wal-Mart Store 1007")), today=TODAY)
+    assert r["vendor"] == "Walmart" and r["category"] == "groceries"
+    assert any("as you corrected it before" in n for n in r["notes"]) and any("you chose it" in n for n in r["notes"])
+    assert reader.read(photo, chat=stand_in(walmart), today=TODAY, remember=False)["vendor"] == "WAL-MART #1007"
+
+
+def test_categories_learned_from_enough_corrections(tmp_path, monkeypatch):
+    from receipt_reader import memory
+
+    monkeypatch.setenv("RECEIPT_MEMORY", str(tmp_path / "memory.json"))
+    m = {"vendors": {}, "categories": {},
+         "examples": [[["shell", "gasoline", "regular"], "fuel"]] * 10 + [[["bistro", "latte", "croissant"], "restaurant"]] * 10}  # fmt: skip
+    r = memory.apply(dict(GOOD, vendor="Esso", items=[{"description": "Regular gasoline", "amount": 50}],
+                          category="other", notes=[]), m)  # fmt: skip
+    assert r["category"] == "fuel" and "learned from your 20 corrections" in r["notes"][0]
+    unsure = memory.apply(dict(GOOD, vendor="Corner", items=[{"description": "Gift card"}], category="other", notes=[]), m)
+    assert unsure["category"] == "other" and unsure["notes"] == []  # no evidence either way: the model's guess stays
+    few = dict(m, examples=m["examples"][:5])
+    assert memory.apply(dict(GOOD, vendor="Esso", items=[{"description": "gasoline"}], category="other", notes=[]),
+                        few)["category"] == "other"  # too few corrections yet  # fmt: skip

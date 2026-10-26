@@ -3,6 +3,8 @@
   photo (JPG, PNG, WEBP, HEIC...)  upright (the phone's rotation flag applied), at most 1600 px, as JPEG
   PDF with text in it         the text itself (invoices from software usually have it): faster and exact
   scanned PDF (no text)       each page drawn as an image, like a photo
+  --fast                      Tesseract reads the text of a photo or scanned page first (under a
+                              second); see recognise() below
   scanned PDF with text       a phone scanner app (Adobe Scan, Microsoft Lens...) adds text it guessed
                               from the photo, with mistakes ("Walmart" read as "Walmartsa"): the page
                               images go to the model, with that text as a hint only
@@ -85,6 +87,30 @@ def load(path: Path) -> dict:
             return {"images": pdf_images(path), "scan_text": text}
         return {"images": pdf_images(path)}
     raise ValueError(f"not a photo or PDF: {path.name}")
+
+
+def recognise(path: Path) -> str | None:
+    """The text of a photo or scanned PDF, read by Tesseract (text recognition, under a second a page on a
+    CPU), or None when it isn't installed. "--psm 6" reads the page as one block: with the default, it
+    dropped the column of prices on every practice receipt; with 6 it read every total."""
+    try:
+        import pytesseract
+
+        pytesseract.get_tesseract_version()
+    except Exception:  # noqa: BLE001 - not installed: the picture is read as before
+        return None
+    ext = path.suffix.lower()
+    if ext in IMAGE_TYPES:
+        with Image.open(path) as img:
+            pages = [ImageOps.exif_transpose(img).convert("L")]
+    elif ext == ".pdf":
+        import pypdfium2 as pdfium
+
+        pdf = pdfium.PdfDocument(str(path))
+        pages = [pdf[i].render(scale=2).to_pil().convert("L") for i in range(min(len(pdf), MAX_PAGES))]
+    else:
+        return None
+    return "\n".join(pytesseract.image_to_string(p, config="--psm 6") for p in pages).strip()
 
 
 def find(paths: list[str]) -> list[Path]:
