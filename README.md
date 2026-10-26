@@ -175,6 +175,11 @@ second look. Getting there took three runs with `eval --details`: each showed a 
 with its readings kept as a test. The default `qwen2.5vl:7b` is the weak link for accuracy here (21/30
 without `--fast`): with Dhoon's `gemma4:26b` installed, use it.
 
+Rules tuned on one set of receipts can just fit that set, so the same settings were then run on 30
+freshly drawn practice receipts it had never seen: **30/30, every field right**, no false alarms, 24
+read from the text alone, 65 seconds a receipt. Practice receipts are still tidier than real ones: the
+next test is your own (see Measure it).
+
 **On a real receipt** (a crumpled Walmart grocery receipt from Kitchener, Ontario), testing found
 five mistakes the practice set never showed. All five are now handled:
 
