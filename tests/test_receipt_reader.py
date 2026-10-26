@@ -503,7 +503,34 @@ def test_a_context_size_is_sent_only_when_you_set_it(monkeypatch):
 
     monkeypatch.setattr(model.urllib.request, "urlopen", urlopen)
     model.chat([{"role": "user", "content": "hi"}], {})
-    assert "num_ctx" not in sent["options"]
+    assert "num_ctx" not in sent["options"] and "keep_alive" not in sent
+    monkeypatch.setattr(model, "KEEP_ALIVE", "5m")
+    model.chat([{"role": "user", "content": "hi"}], {})
+    assert sent["keep_alive"] == "5m"
     monkeypatch.setattr(model, "CONTEXT", 8192)
     model.chat([{"role": "user", "content": "hi"}], {})
     assert sent["options"]["num_ctx"] == 8192
+
+
+def test_the_receipts_own_clues_decide_its_currency(photo, monkeypatch):
+    """--fast read 11 of 12 wrong receipts with the wrong currency (Canadian ones as another dollar); on
+    the 30 practice receipts, these clues alone get every currency right."""
+    c = checks.currency_from_text
+    assert c("Walmart\nSTORE 1007\n1400 OTTAWA ST S\nKITCHENER, ON\nN2E 4E2\nGST/HST 137466199 RT 0001")[0] == "CAD"
+    assert c("Shop\n606 Main Street\nOttawa ON\nHST 13% $4.09")[0] == "CAD"
+    assert c("Shop\nMontreal Qc\nTPS/GST 5% $2.02")[0] == "CAD"  # the recognised text's own spelling
+    assert c("Books\n706 Market Square\nAustin TX\nTOTAL $27.22")[0] == "USD"
+    assert c("Books\nPortland or\nTOTAL")[0] == "USD"
+    assert c("Taxis\nSydney NSW\nABN 55 272 725 219\nGST incl. $2.46")[0] == "AUD"
+    assert c("Shop\nSeattle WA 98101")[0] == "USD" and c("Shop\nPerth WA 6000")[0] == "AUD"
+    assert c("Shop\nYellowknife NT X1A 2P4")[0] == "CAD"
+    assert c("Winkel\nRotterdam\nMwSt 7% incl. 1.47")[0] == "EUR"
+    assert c("Store\nPune MH\nRice 2kg Rs 64.90\nCGST 2.5%")[0] == "INR"
+    assert c("Cafe\nParis\nTOTAL 9,50") == ("", "")  # no clear clue: the model's reading stands
+    assert c("Shop\nSeattle WA") == ("", "")  # WA alone: the USA or Australia, not decided
+    r = dict(GOOD, currency="USD")
+    assert checks.fix_currency(r, "Shop\nOttawa ON\nHST 13%") and r["currency"] == "CAD"
+    monkeypatch.setattr(files, "recognise", lambda path: "Taxis\nSydney NSW\nABN 55 272 725 219\nGST incl.")
+    got = reader.read(photo, chat=stand_in(dict(GOOD, currency="CAD", date="2026-03-04", date_printed="03/04/26")),
+                      today=TODAY)  # fmt: skip
+    assert got["currency"] == "AUD" and got["date"] == "2026-04-03"  # the currency, then the date order

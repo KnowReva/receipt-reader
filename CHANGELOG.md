@@ -1,5 +1,15 @@
 # Changes
 
+## 0.3.3 (October 2026)
+
+- The receipt's own clues decide its currency when they are clear: a province or state code after the
+  city (with the postcode for WA, NT, SA), and tax names only one country uses (GST/HST, TPS/TVQ, ABN,
+  MwSt, CGST, Rs...). From the PDF's text, or the photo's (Tesseract, when installed). In the --fast
+  run, 11 of the 12 wrong receipts had the wrong currency; these clues alone get all 30 practice
+  receipts right. The date order is then worked out from the corrected currency.
+- `RECEIPT_KEEP_ALIVE` (e.g. 5m): how long Ollama keeps the model after a receipt; and the README says
+  how to take turns with other AI jobs on the same computer (flock on Dhoon's queue).
+
 ## 0.3.2 (October 2026)
 
 - The context window is no longer sent by default. Asking for 8192 on every request made Ollama reload

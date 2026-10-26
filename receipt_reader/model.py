@@ -15,6 +15,10 @@ DEFAULT_MODEL = os.environ.get("RECEIPT_MODEL", "qwen2.5vl:7b")
 # programs share Ollama (Dhoon runs it with 16-32k) it reloads again for them: minutes each time. If
 # your Ollama runs with its plain default (4096) and long receipts get cut off, set RECEIPT_CONTEXT=8192.
 CONTEXT = int(os.environ.get("RECEIPT_CONTEXT", "0") or 0)
+# How long Ollama keeps the model in memory after a receipt (e.g. "5m"). Not sent unless set: on a
+# computer whose Ollama keeps models forever (Dhoon's), set it so receipt-reader's own models don't
+# stay in memory and push out the ones your other jobs need.
+KEEP_ALIVE = os.environ.get("RECEIPT_KEEP_ALIVE", "").strip()
 
 
 class ModelError(RuntimeError):
@@ -29,6 +33,7 @@ def chat(messages: list[dict], schema: dict, model: str = DEFAULT_MODEL, url: st
          timeout: float = 600) -> dict:  # fmt: skip
     """Send one chat to Ollama and return the JSON object it answered with."""
     body = {
+        **({"keep_alive": KEEP_ALIVE} if KEEP_ALIVE else {}),
         "model": model,
         "messages": messages,
         "format": schema,  # structured outputs: the answer must match this JSON schema

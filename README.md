@@ -48,6 +48,8 @@ receipt-reader scan ~/Receipts -o receipts.csv     # a whole folder (and its sub
 receipt-reader scan ~/Receipts --items items.csv   # also every line item, one per row
 receipt-reader scan ~/Receipts --json all.json     # everything, for your own scripts
 receipt-reader scan ~/Receipts --currency CAD      # your usual currency, for receipts that only print "$"
+                                                   # (clues on the receipt itself, like "Ottawa ON" or
+                                                   # "GST/HST", "ABN", "MwSt", decide it when they are clear)
 ```
 
 | Column | |
@@ -94,6 +96,20 @@ the column of prices on every practice receipt; with 6 it read every total.
 
 Run `eval` with and without `--fast` on the same receipts before you rely on it: the arithmetic catches
 misread numbers, but not a misread shop name or date.
+
+## On a computer that runs other AI jobs
+
+Reading receipts takes the processor and several GB of memory for as long as it runs. If the same
+Ollama also serves other scheduled jobs (on a Dhoon computer: the knowledge base, a newsroom), run
+receipt-reader when they are idle, or let it take its turn in Dhoon's queue, which those jobs use:
+
+```bash
+flock ~/dhoon/runtime/heavy.lock receipt-reader eval samples/ --fast      # waits for the running job
+```
+
+While it runs, the other jobs wait for it. Afterwards, `ollama ps` shows what is still in memory, and
+`ollama stop qwen2.5vl:7b` frees a model you no longer need. `RECEIPT_KEEP_ALIVE=5m` makes Ollama
+unload receipt-reader's models five minutes after the last receipt (best for a model only it uses).
 
 ## It learns your corrections
 

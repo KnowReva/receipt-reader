@@ -64,6 +64,78 @@ def drop_unprinted_tax(r: dict) -> list[str]:
     return []
 
 
+# The receipt's own clues to its currency, for the currency the arithmetic can't check (a plain "$" is
+# Canada, the USA, Australia...). Strong clues (tax names and numbers only one country uses) count 3; a
+# state or province code after the city counts 2, or 1 to each country when two share it (WA, NT, SA).
+STRONG = [
+    ("CAD", r"\bGST/HST\b|\bHST\b|\bTPS\b|\bTVQ\b|\bQST\b|\bRT ?0001\b|\bTQ ?0001\b"),
+    ("AUD", r"\bABN\b"),
+    ("EUR", r"€|\bEUR\b|\bMwSt\b|\bTVA\b|\bIVA\b|\bBTW\b|\bUSt\b"),
+    ("INR", r"₹|\bRs\.?\s?\d|\bINR\b|\bCGST\b|\bSGST\b|\bGSTIN\b"),
+    ("GBP", r"£|\bGBP\b"),
+    ("USD", r"\bsales tax\b"),
+]
+PROVINCES = "ON QC BC AB MB SK NS NB NL PE YT NU"
+US_STATES = ("AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND "
+             "OH OK OR PA RI SC SD TN TX UT VT VA WV WI WY DC")  # fmt: skip
+AU_STATES = "NSW VIC QLD TAS ACT"
+SHARED = {"WA": ("USD", "AUD"), "SA": ("AUD",), "NT": ("CAD", "AUD")}
+
+
+def currency_from_text(text: str) -> tuple[str, str]:
+    """(currency, the clues) when the receipt's text points clearly to one currency, else ("", "")."""
+    score: dict[str, int] = {}
+    why: dict[str, list[str]] = {}
+
+    def add(cur, n, clue):
+        score[cur] = score.get(cur, 0) + n
+        why.setdefault(cur, []).append(clue)
+
+    for cur, pattern in STRONG:
+        m = re.search(pattern, text or "", re.IGNORECASE if cur == "USD" else 0)
+        if m:
+            add(cur, 3, m.group(0).strip())
+    for line in (text or "").splitlines()[:8]:  # the address is at the top
+        m = re.search(r"[A-Za-z][A-Za-z ,.'-]+ ([A-Za-z]{2,3})\.?( [A-Z0-9]{3} ?[A-Z0-9]{3}| \d{4,5}(?:-\d{4})?)?\s*$", line)
+        code, post = (m.group(1).upper(), (m.group(2) or "").strip()) if m else ("", "")
+        if code in SHARED and re.fullmatch(r"\d{5}(-\d{4})?", post):
+            code = "_US"  # a 5-digit ZIP code: the USA (Seattle WA 98101)
+        elif code in SHARED and re.fullmatch(r"\d{4}", post):
+            code = "_AU"  # a 4-digit postcode: Australia (Perth WA 6000)
+        elif code in SHARED and re.fullmatch(r"[A-Z]\d[A-Z] ?\d[A-Z]\d", post):
+            code = "ON"  # a Canadian postal code (Yellowknife NT X1A 2P4): counts as a province
+        if code == "_US":
+            add("USD", 2, line.strip())
+            continue
+        if code == "_AU":
+            add("AUD", 2, line.strip())
+            continue
+        if code in PROVINCES.split():
+            add("CAD", 2, line.strip())
+        elif code in AU_STATES.split():
+            add("AUD", 2, line.strip())
+        elif code in SHARED:
+            for cur in SHARED[code]:
+                add(cur, 1, line.strip())
+        elif code in US_STATES.split():
+            add("USD", 2, line.strip())
+    if not score:
+        return "", ""
+    ranked = sorted(score.items(), key=lambda kv: -kv[1])
+    if ranked[0][1] < 2 or (len(ranked) > 1 and ranked[1][1] >= ranked[0][1]):
+        return "", ""
+    return ranked[0][0], "; ".join(dict.fromkeys(why[ranked[0][0]]))[:80]
+
+
+def fix_currency(r: dict, text: str) -> list[str]:
+    """The receipt's own clues decide its currency when they are clear."""
+    cur, clues = currency_from_text(text)
+    if not cur or str(r.get("currency", "")).upper() == cur:
+        return []
+    before, r["currency"] = r.get("currency"), cur
+    return [f"currency {cur} from the receipt's own clues ({clues}); the model said {before}"]
+
+
 DAY_FIRST = {"EUR", "GBP", "INR", "AUD", "NZD", "CHF", "SEK", "NOK", "DKK", "ZAR", "SGD"}
 MONTH_FIRST = {"USD"}
 

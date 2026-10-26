@@ -43,16 +43,19 @@ def read(path: Path, chat=None, today: dt.date | None = None, currency: str = ""
     currency = currency.strip().upper()
     content = files.load(path)
     file_day = files.taken_on(path)
+    # the receipt's text, for clues to its currency: a PDF's own text, or (with Tesseract) the photo's
+    clues = content.get("text") or content.get("scan_text") or (files.recognise(path) or "")
 
     if fast and "images" in content:
-        text = files.recognise(path)
+        text = clues
         if text and len(text) > 40:
             quick = {"text": text, "recognised": True}
             try:
                 r = ask(quick, chat=chat, currency=currency, **(dict(kw, model=text_model) if text_model else kw))
                 if currency and not re.fullmatch(r"[A-Z]{3}", str(r.get("currency", "")).strip().upper()):
                     r["currency"] = currency
-                r["notes"] = checks.drop_impossible_taxes(r) + checks.drop_unprinted_tax(r) + checks.fix_date(r)
+                r["notes"] = (checks.fix_currency(r, text) + checks.drop_impossible_taxes(r) + checks.drop_unprinted_tax(r)
+                              + checks.fix_date(r))  # fmt: skip
                 found = checks.problems(r, today, file_day)
             except model.BadAnswer:
                 found, r = ["broken answer"], {}
@@ -66,8 +69,9 @@ def read(path: Path, chat=None, today: dt.date | None = None, currency: str = ""
         r = ask(content, extra, chat=chat, currency=currency, **kw)
         if currency and not re.fullmatch(r"[A-Z]{3}", str(r.get("currency", "")).strip().upper()):
             r["currency"] = currency  # "$" or "" read: your usual currency
-        r["notes"] = checks.drop_impossible_taxes(r)  # registration numbers read as tax
-        r["notes"] += checks.fix_date(r)  # the printed date, put in order by code
+        r["notes"] = checks.fix_currency(r, clues)  # the receipt's own clues to its currency
+        r["notes"] += checks.drop_impossible_taxes(r)  # registration numbers read as tax
+        r["notes"] += checks.fix_date(r)  # the printed date, put in order by code (after the currency)
         r["notes"] += checks.drop_unprinted_tax(r)  # a tax the receipt's own numbers leave no room for
         return r, checks.problems(r, today, file_day)
 
