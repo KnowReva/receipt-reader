@@ -157,12 +157,23 @@ as real ones do. The arithmetic check can't catch a wrong currency, so use `--cu
 receipts. Time: about 100 seconds a receipt. With the model's "thinking" left on, it was 216.
 
 **With `--fast`** (Tesseract first, `--text-model qwen3:4b-instruct-2507-q4_K_M` for the text, `gemma4:26b`
-for the pictures; version 0.3.4, same NUC, same practice receipts): 47 seconds a receipt, two to three
-times faster. 22 of 30 were read from the text alone. All five fields right on 26/30, every total
-right. The 4 misses were all one thing: Australian practice receipts from an older set, whose only
-currency clue was "GST incl."; 0.3.5 reads that clue, and replaying those 4 readings gives 3 right and
-1 marked CHECK. The same run showed the default `qwen2.5vl:7b` is the weak link for accuracy here
-(21/30 without `--fast`): with Dhoon's `gemma4:26b` installed, use it.
+for the pictures; version 0.3.5, same NUC, same 30 practice receipts):
+
+| Field | Right |
+|---|---|
+| date | 30/30 |
+| total | 30/30 |
+| tax | 29/30 |
+| currency | 30/30 |
+| shop | 30/30 |
+
+29/30 all five right; the one miss (an Australian receipt whose "GST incl." line the model didn't read)
+was marked CHECK, and no correct receipt was flagged. 22 were read from the text alone. Time: 64
+seconds a receipt on average, about 52 without that one receipt, which took a picture reading and a
+second look. Getting there took three runs with `eval --details`: each showed a kind of mistake
+(currency on "$" receipts, the order of dates, tax shown as included), and each became a rule in code
+with its readings kept as a test. The default `qwen2.5vl:7b` is the weak link for accuracy here (21/30
+without `--fast`): with Dhoon's `gemma4:26b` installed, use it.
 
 **On a real receipt** (a crumpled Walmart grocery receipt from Kitchener, Ontario), testing found
 five mistakes the practice set never showed. All five are now handled:
