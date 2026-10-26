@@ -534,3 +534,30 @@ def test_the_receipts_own_clues_decide_its_currency(photo, monkeypatch):
     got = reader.read(photo, chat=stand_in(dict(GOOD, currency="CAD", date="2026-03-04", date_printed="03/04/26")),
                       today=TODAY)  # fmt: skip
     assert got["currency"] == "AUD" and got["date"] == "2026-04-03"  # the currency, then the date order
+
+
+CLUES = {"au": "COASTLINE\nSydney NSW\nABN 55 272 725 219\nGST incl. $2.46",
+         "on": "NORTHLINE\nOttawa ON\nHST 13% $8.87\nGST/HST 140260662 RT 0001",
+         "qc": "CAFE LUMEN\nMontreal QC\nTPS/GST 5% $2.59\nTVQ/QST 9.975% $5.16",
+         "eu": "BACKEREI\nRotterdam\nMwSt 7% incl. 0.49"}  # fmt: skip
+
+
+def test_the_twelve_wrong_readings_of_october_26_are_now_right_or_flagged(photo, monkeypatch):
+    """eval --fast --details on the practice set (0.3.1): 12 wrong, none flagged. Replayed exactly as the
+    model gave them, with the clues each receipt prints, every one is now right or marked CHECK."""
+    from pathlib import Path
+
+    cases = json.loads((Path(__file__).parent / "data" / "why-fast-2026-10-26.json").read_text())
+    outcome = {}
+    for case in cases:
+        region = case["file"].split("-")[-1].split(".")[0]
+        monkeypatch.setattr(files, "recognise", lambda path, t=CLUES[region]: t)
+        got = reader.read(photo, chat=stand_in(case["read"]), today=TODAY, remember=False)
+        right = all(evaluate.compare(got, case["answer"]).values())
+        outcome[case["file"]] = "right" if right else ("flagged" if got["status"] == "check" else "WRONG")
+    assert "WRONG" not in outcome.values(), outcome
+    assert outcome["receipt-12-au.jpg"] == outcome["receipt-18-au.jpg"] == "right"  # AUD, then the date and GST
+    assert outcome["receipt-16-eu.jpg"] == "flagged"  # "MwSt 7% incl." but the reading added it on top
+    assert outcome["receipt-14-qc.jpg"] == "flagged"  # printed "2026-05-97": not a real date
+    assert outcome["receipt-24-au.jpg"] == "flagged"  # "GST incl." but the total had it added: 6.53, not 5.99
+    assert list(outcome.values()).count("right") == 9

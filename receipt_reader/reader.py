@@ -56,7 +56,7 @@ def read(path: Path, chat=None, today: dt.date | None = None, currency: str = ""
                     r["currency"] = currency
                 r["notes"] = (checks.fix_currency(r, text) + checks.drop_impossible_taxes(r) + checks.drop_unprinted_tax(r)
                               + checks.fix_date(r))  # fmt: skip
-                found = checks.problems(r, today, file_day)
+                found = checks.problems(r, today, file_day, text)
             except model.BadAnswer:
                 found, r = ["broken answer"], {}
             if not found and checks.checked(r):
@@ -73,7 +73,7 @@ def read(path: Path, chat=None, today: dt.date | None = None, currency: str = ""
         r["notes"] += checks.drop_impossible_taxes(r)  # registration numbers read as tax
         r["notes"] += checks.fix_date(r)  # the printed date, put in order by code (after the currency)
         r["notes"] += checks.drop_unprinted_tax(r)  # a tax the receipt's own numbers leave no room for
-        return r, checks.problems(r, today, file_day)
+        return r, checks.problems(r, today, file_day, clues)
 
     try:
         r, found = look()

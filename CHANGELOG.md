@@ -1,5 +1,14 @@
 # Changes
 
+## 0.3.4 (October 2026)
+
+From `eval --fast --details` on the practice set (12 wrong, none flagged), two more checks:
+- a receipt that says its tax is included ("MwSt 7% incl.", "GST incl.") but a reading that adds it on
+  top is marked CHECK (and with --fast, read again from the picture);
+- a date printed year first must be a real date, and the same one: "2026-05-97" (a misread 07) is CHECK.
+Replayed with the receipts' own clues, those 12 readings now come out 9 right and 3 flagged, none wrong
+(tests/data/why-fast-2026-10-26.json).
+
 ## 0.3.3 (October 2026)
 
 - The receipt's own clues decide its currency when they are clear: a province or state code after the

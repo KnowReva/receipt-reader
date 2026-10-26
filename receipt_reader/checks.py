@@ -171,9 +171,13 @@ def fix_date(r: dict) -> list[str]:
     return [f"date {iso} from \"{printed}\" as printed (the model said {before})"]
 
 
-def problems(r: dict, today: dt.date | None = None, file_day: dt.date | None = None) -> list[str]:
+INCLUDED = re.compile(r"(?im)^.*\b(?:MwSt|USt|VAT|GST|TVA|IVA|BTW|tax)\b.*\b(?:incl\.?|included|inkl\.?|inclus\w*|TTC)(?:\W|$)")
+
+
+def problems(r: dict, today: dt.date | None = None, file_day: dt.date | None = None, text: str = "") -> list[str]:
     """Everything that doesn't add up (empty: the receipt checks out). file_day: when the photo was taken
-    (or the file saved): a receipt dated much earlier usually means a misread year ("26" read as 2023)."""
+    (or the file saved): a receipt dated much earlier usually means a misread year ("26" read as 2023).
+    text: the receipt's own text, when there is one, for what it says about the tax and the date."""
     today = today or dt.date.today()
     found = []
     total = money(r.get("total"))
@@ -190,6 +194,15 @@ def problems(r: dict, today: dt.date | None = None, file_day: dt.date | None = N
                          " check the year")  # fmt: skip
     except ValueError:
         found.append(f"date '{r.get('date', '')}' isn't a date (YYYY-MM-DD)")
+    printed = str(r.get("date_printed") or "").strip()
+    m = re.fullmatch(r"(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})", printed)
+    if m:  # printed year first: no doubt about the order, so it must be a real date and the same one
+        try:
+            as_printed = dt.date(int(m[1]), int(m[2]), int(m[3])).isoformat()
+            if as_printed != str(r.get("date", "")):
+                found.append(f"the date {r.get('date')} isn't the one printed ({printed}): check the date")
+        except ValueError:
+            found.append(f"the date as printed, {printed}, isn't a real date (a misread digit?): check the date")
     vendor = _name(r.get("vendor"))
     if not vendor:
         found.append("no shop name")
@@ -230,6 +243,10 @@ def problems(r: dict, today: dt.date | None = None, file_day: dt.date | None = N
                      f"{100 * taxes / total:.0f}%): check the tax lines")  # fmt: skip
     elif added and base and taxes > 0.30 * base:
         found.append(f"tax {taxes:.2f} is more than 30% of {base:.2f}: check the tax lines")
+    if text and taxes and total and base is not None and added and not included and INCLUDED.search(text):
+        line = INCLUDED.search(text).group(0).strip()[:40]
+        found.append(f"the receipt says the tax is included (\"{line}\"), but this reading adds {taxes:.2f} on "
+                     "top: check the total")  # fmt: skip
     if total and base is not None and not (added or included) and not any(p.startswith("tax ") for p in found):
         found.append(f"{'subtotal' if subtotal is not None else 'items'} {base:.2f} + tax {taxes:.2f}"
                      f"{f' + tip {tip:.2f}' if tip else ''} = {base + taxes + tip:.2f}, not the total {total:.2f}")  # fmt: skip

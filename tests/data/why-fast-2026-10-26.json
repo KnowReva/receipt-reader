@@ -1,0 +1,930 @@
+[
+ {
+  "file": "receipt-06-au.jpg",
+  "wrong": [
+   "currency"
+  ],
+  "read": {
+   "category": "travel",
+   "currency": "USD",
+   "date": "2026-02-14",
+   "date_printed": "14/02/2026",
+   "items": [
+    {
+     "amount": 24.6,
+     "description": "Fare",
+     "quantity": 1
+    },
+    {
+     "amount": 2.5,
+     "description": "Booking fee",
+     "quantity": 1
+    }
+   ],
+   "payment_method": "VISA",
+   "subtotal": 27.1,
+   "taxes": [
+    {
+     "amount": 2.46,
+     "name": "GST incl."
+    }
+   ],
+   "tip": null,
+   "total": 27.1,
+   "vendor": "SOUTHERN CROSS TAXIS"
+  },
+  "answer": {
+   "vendor": "Southern Cross Taxis",
+   "date": "2026-02-14",
+   "currency": "AUD",
+   "items": [
+    {
+     "description": "Fare",
+     "quantity": 1,
+     "amount": 24.6
+    },
+    {
+     "description": "Booking fee",
+     "quantity": 1,
+     "amount": 2.5
+    }
+   ],
+   "subtotal": null,
+   "taxes": [
+    {
+     "name": "GST incl.",
+     "amount": 2.46
+    }
+   ],
+   "tip": null,
+   "total": 27.1,
+   "payment_method": "VISA ****4821",
+   "category": "travel"
+  }
+ },
+ {
+  "file": "receipt-07-on.jpg",
+  "wrong": [
+   "currency"
+  ],
+  "read": {
+   "category": "office",
+   "currency": "USD",
+   "date": "2026-04-24",
+   "date_printed": "Apr 24, 2026",
+   "items": [
+    {
+     "amount": 4.79,
+     "description": "Screws pack",
+     "quantity": 1
+    },
+    {
+     "amount": 6.99,
+     "description": "Notebook",
+     "quantity": 1
+    },
+    {
+     "amount": 12.49,
+     "description": "Tape measure",
+     "quantity": 1
+    },
+    {
+     "amount": 25.0,
+     "description": "Gift card",
+     "quantity": 1
+    },
+    {
+     "amount": 18.99,
+     "description": "Paperback novel",
+     "quantity": 1
+    }
+   ],
+   "payment_method": "MASTERCARD",
+   "subtotal": 68.26,
+   "taxes": [
+    {
+     "amount": 8.87,
+     "name": "HST"
+    }
+   ],
+   "tip": null,
+   "total": 77.13,
+   "vendor": "NORTHLINE HARDWARE"
+  },
+  "answer": {
+   "vendor": "Northline Hardware",
+   "date": "2026-04-24",
+   "currency": "CAD",
+   "items": [
+    {
+     "description": "Screws pack",
+     "quantity": 1,
+     "amount": 4.79
+    },
+    {
+     "description": "Notebook",
+     "quantity": 1,
+     "amount": 6.99
+    },
+    {
+     "description": "Tape measure",
+     "quantity": 1,
+     "amount": 12.49
+    },
+    {
+     "description": "Gift card",
+     "quantity": 1,
+     "amount": 25.0
+    },
+    {
+     "description": "Paperback novel",
+     "quantity": 1,
+     "amount": 18.99
+    }
+   ],
+   "subtotal": 68.26,
+   "taxes": [
+    {
+     "name": "HST 13%",
+     "amount": 8.87
+    }
+   ],
+   "tip": null,
+   "total": 77.13,
+   "payment_method": "MASTERCARD ****1177",
+   "category": "other"
+  }
+ },
+ {
+  "file": "receipt-08-qc.jpg",
+  "wrong": [
+   "currency"
+  ],
+  "read": {
+   "category": "restaurant",
+   "currency": "USD",
+   "date": "2026-02-03",
+   "date_printed": "2026-02-03",
+   "items": [
+    {
+     "amount": 22.5,
+     "description": "Soup of the day",
+     "quantity": 3
+    },
+    {
+     "amount": 14.95,
+     "description": "Club sandwich",
+     "quantity": 1
+    },
+    {
+     "amount": 14.25,
+     "description": "Latte",
+     "quantity": 3
+    }
+   ],
+   "payment_method": "card",
+   "subtotal": 51.7,
+   "taxes": [
+    {
+     "amount": 2.59,
+     "name": "TPS/GST"
+    },
+    {
+     "amount": 5.16,
+     "name": "TVQ/QST"
+    }
+   ],
+   "tip": 7.75,
+   "total": 67.2,
+   "vendor": "CAFE LUMEN"
+  },
+  "answer": {
+   "vendor": "Cafe Lumen",
+   "date": "2026-02-03",
+   "currency": "CAD",
+   "items": [
+    {
+     "description": "Soup of the day",
+     "quantity": 3,
+     "amount": 22.5
+    },
+    {
+     "description": "Club sandwich",
+     "quantity": 1,
+     "amount": 14.95
+    },
+    {
+     "description": "Latte",
+     "quantity": 3,
+     "amount": 14.25
+    }
+   ],
+   "subtotal": 51.7,
+   "taxes": [
+    {
+     "name": "TPS/GST 5%",
+     "amount": 2.59
+    },
+    {
+     "name": "TVQ/QST 9.975%",
+     "amount": 5.16
+    }
+   ],
+   "tip": 7.75,
+   "total": 67.2,
+   "payment_method": "VISA ****4821",
+   "category": "restaurant"
+  }
+ },
+ {
+  "file": "receipt-12-au.jpg",
+  "wrong": [
+   "date",
+   "tax",
+   "currency"
+  ],
+  "read": {
+   "vendor": "COASTLINE GREEN GROCER",
+   "date": "2026-09-02",
+   "date_printed": "09/02/2026",
+   "currency": "USD",
+   "items": [
+    {
+     "description": "Apples 1.5kg",
+     "quantity": 1,
+     "amount": 6.99
+    },
+    {
+     "description": "Whole milk 2L",
+     "quantity": 3,
+     "amount": 13.47
+    },
+    {
+     "description": "Bread loaf",
+     "quantity": 3,
+     "amount": 9.87
+    }
+   ],
+   "subtotal": 30.33,
+   "taxes": [
+    {
+     "name": "GST",
+     "amount": 2.76
+    }
+   ],
+   "tip": null,
+   "total": 30.33,
+   "payment_method": "cash",
+   "category": "groceries"
+  },
+  "answer": {
+   "vendor": "Coastline Green Grocer",
+   "date": "2026-02-09",
+   "currency": "AUD",
+   "items": [
+    {
+     "description": "Apples 1.5kg",
+     "quantity": 1,
+     "amount": 6.99
+    },
+    {
+     "description": "Whole milk 2L",
+     "quantity": 3,
+     "amount": 13.47
+    },
+    {
+     "description": "Bread loaf",
+     "quantity": 3,
+     "amount": 9.87
+    }
+   ],
+   "subtotal": null,
+   "taxes": [
+    {
+     "name": "GST incl.",
+     "amount": 2.76
+    }
+   ],
+   "tip": null,
+   "total": 30.33,
+   "payment_method": "CASH",
+   "category": "groceries"
+  },
+  "restored": "taxes as the model gave them (0.3.1 removed them before saving; see its notes)"
+ },
+ {
+  "file": "receipt-13-on.jpg",
+  "wrong": [
+   "currency"
+  ],
+  "read": {
+   "category": "restaurant",
+   "currency": "USD",
+   "date": "2025-12-19",
+   "date_printed": "Dec 19, 2025",
+   "items": [
+    {
+     "amount": 7.5,
+     "description": "Soup of the day",
+     "quantity": 1
+    }
+   ],
+   "payment_method": "cash",
+   "subtotal": 7.5,
+   "taxes": [
+    {
+     "amount": 0.98,
+     "name": "HST"
+    }
+   ],
+   "tip": 1.12,
+   "total": 9.6,
+   "vendor": "BLUE KETTLE DINER"
+  },
+  "answer": {
+   "vendor": "Blue Kettle Diner",
+   "date": "2025-12-19",
+   "currency": "CAD",
+   "items": [
+    {
+     "description": "Soup of the day",
+     "quantity": 1,
+     "amount": 7.5
+    }
+   ],
+   "subtotal": 7.5,
+   "taxes": [
+    {
+     "name": "HST 13%",
+     "amount": 0.98
+    }
+   ],
+   "tip": 1.12,
+   "total": 9.6,
+   "payment_method": "CASH",
+   "category": "restaurant"
+  }
+ },
+ {
+  "file": "receipt-14-qc.jpg",
+  "wrong": [
+   "date",
+   "currency"
+  ],
+  "read": {
+   "category": "restaurant",
+   "currency": "USD",
+   "date": "2026-05-09",
+   "date_printed": "2026-05-97",
+   "items": [
+    {
+     "amount": 7.5,
+     "description": "Soup of the day",
+     "quantity": 1
+    },
+    {
+     "amount": 9.5,
+     "description": "2 x Latte",
+     "quantity": 2
+    },
+    {
+     "amount": 3.5,
+     "description": "Iced tea",
+     "quantity": 1
+    },
+    {
+     "amount": 26.0,
+     "description": "2 x Veg curry",
+     "quantity": 2
+    },
+    {
+     "amount": 6.95,
+     "description": "Dessert",
+     "quantity": 1
+    }
+   ],
+   "payment_method": "card",
+   "subtotal": 53.45,
+   "taxes": [
+    {
+     "amount": 2.67,
+     "name": "TPS/GST"
+    },
+    {
+     "amount": 5.33,
+     "name": "TVQ/QST"
+    }
+   ],
+   "tip": 10.69,
+   "total": 72.14,
+   "vendor": "CAFE LUMEN"
+  },
+  "answer": {
+   "vendor": "Cafe Lumen",
+   "date": "2026-05-07",
+   "currency": "CAD",
+   "items": [
+    {
+     "description": "Soup of the day",
+     "quantity": 1,
+     "amount": 7.5
+    },
+    {
+     "description": "Latte",
+     "quantity": 2,
+     "amount": 9.5
+    },
+    {
+     "description": "Iced tea",
+     "quantity": 1,
+     "amount": 3.5
+    },
+    {
+     "description": "Veg curry",
+     "quantity": 2,
+     "amount": 26.0
+    },
+    {
+     "description": "Dessert",
+     "quantity": 1,
+     "amount": 6.95
+    }
+   ],
+   "subtotal": 53.45,
+   "taxes": [
+    {
+     "name": "TPS/GST 5%",
+     "amount": 2.67
+    },
+    {
+     "name": "TVQ/QST 9.975%",
+     "amount": 5.33
+    }
+   ],
+   "tip": 10.69,
+   "total": 72.14,
+   "payment_method": "VISA ****4821",
+   "category": "restaurant"
+  }
+ },
+ {
+  "file": "receipt-16-eu.jpg",
+  "wrong": [
+   "total"
+  ],
+  "read": {
+   "category": "groceries",
+   "currency": "EUR",
+   "date": "2026-05-28",
+   "date_printed": "28.05.2026",
+   "items": [
+    {
+     "amount": 7.49,
+     "description": "Cheddar 400g",
+     "quantity": 1
+    }
+   ],
+   "payment_method": "debit",
+   "subtotal": 7.49,
+   "taxes": [
+    {
+     "amount": 0.49,
+     "name": "MwSt"
+    }
+   ],
+   "tip": null,
+   "total": 7.98,
+   "vendor": "BACKEREL SONNENSCHEIN"
+  },
+  "answer": {
+   "vendor": "Backerei Sonnenschein",
+   "date": "2026-05-28",
+   "currency": "EUR",
+   "items": [
+    {
+     "description": "Cheddar 400g",
+     "quantity": 1,
+     "amount": 7.49
+    }
+   ],
+   "subtotal": null,
+   "taxes": [
+    {
+     "name": "MwSt 7% incl.",
+     "amount": 0.49
+    }
+   ],
+   "tip": null,
+   "total": 7.49,
+   "payment_method": "DEBIT",
+   "category": "groceries"
+  }
+ },
+ {
+  "file": "receipt-18-au.jpg",
+  "wrong": [
+   "tax",
+   "currency"
+  ],
+  "read": {
+   "category": "groceries",
+   "currency": "USD",
+   "date": "2026-09-22",
+   "date_printed": "22/09/2026",
+   "items": [
+    {
+     "amount": 1.79,
+     "description": "Bananas 1kg",
+     "quantity": 1
+    },
+    {
+     "amount": 13.47,
+     "description": "Whole milk 2L",
+     "quantity": 3
+    },
+    {
+     "amount": 25.98,
+     "description": "Coffee beans",
+     "quantity": 2
+    },
+    {
+     "amount": 9.87,
+     "description": "Bread loaf",
+     "quantity": 3
+    },
+    {
+     "amount": 6.49,
+     "description": "Rice 2kg",
+     "quantity": 1
+    }
+   ],
+   "payment_method": "MASTERCARD",
+   "subtotal": 57.6,
+   "taxes": [
+    {
+     "name": "GST",
+     "amount": 5.24
+    }
+   ],
+   "tip": null,
+   "total": 57.6,
+   "vendor": "COASTLINE GREEN GROCER"
+  },
+  "answer": {
+   "vendor": "Coastline Green Grocer",
+   "date": "2026-09-22",
+   "currency": "AUD",
+   "items": [
+    {
+     "description": "Bananas 1kg",
+     "quantity": 1,
+     "amount": 1.79
+    },
+    {
+     "description": "Whole milk 2L",
+     "quantity": 3,
+     "amount": 13.47
+    },
+    {
+     "description": "Coffee beans",
+     "quantity": 2,
+     "amount": 25.98
+    },
+    {
+     "description": "Bread loaf",
+     "quantity": 3,
+     "amount": 9.87
+    },
+    {
+     "description": "Rice 2kg",
+     "quantity": 1,
+     "amount": 6.49
+    }
+   ],
+   "subtotal": null,
+   "taxes": [
+    {
+     "name": "GST incl.",
+     "amount": 5.24
+    }
+   ],
+   "tip": null,
+   "total": 57.6,
+   "payment_method": "MASTERCARD ****1177",
+   "category": "groceries"
+  },
+  "restored": "taxes as the model gave them (0.3.1 removed them before saving; see its notes)"
+ },
+ {
+  "file": "receipt-19-on.jpg",
+  "wrong": [
+   "currency"
+  ],
+  "read": {
+   "category": "restaurant",
+   "currency": "USD",
+   "date": "2026-03-19",
+   "date_printed": "Mar 19, 2026",
+   "items": [
+    {
+     "amount": 10.5,
+     "description": "Fries",
+     "quantity": 2
+    },
+    {
+     "amount": 6.95,
+     "description": "Dessert",
+     "quantity": 1
+    },
+    {
+     "amount": 29.9,
+     "description": "Club sandwich",
+     "quantity": 2
+    },
+    {
+     "amount": 9.5,
+     "description": "Latte",
+     "quantity": 2
+    },
+    {
+     "amount": 3.5,
+     "description": "Iced tea",
+     "quantity": 1
+    }
+   ],
+   "payment_method": "card",
+   "subtotal": 60.35,
+   "taxes": [
+    {
+     "amount": 7.85,
+     "name": "HST"
+    }
+   ],
+   "tip": 9.05,
+   "total": 77.25,
+   "vendor": "BLUE KETTLE DINER"
+  },
+  "answer": {
+   "vendor": "Blue Kettle Diner",
+   "date": "2026-03-19",
+   "currency": "CAD",
+   "items": [
+    {
+     "description": "Fries",
+     "quantity": 2,
+     "amount": 10.5
+    },
+    {
+     "description": "Dessert",
+     "quantity": 1,
+     "amount": 6.95
+    },
+    {
+     "description": "Club sandwich",
+     "quantity": 2,
+     "amount": 29.9
+    },
+    {
+     "description": "Latte",
+     "quantity": 2,
+     "amount": 9.5
+    },
+    {
+     "description": "Iced tea",
+     "quantity": 1,
+     "amount": 3.5
+    }
+   ],
+   "subtotal": 60.35,
+   "taxes": [
+    {
+     "name": "HST 13%",
+     "amount": 7.85
+    }
+   ],
+   "tip": 9.05,
+   "total": 77.25,
+   "payment_method": "VISA ****4821",
+   "category": "restaurant"
+  }
+ },
+ {
+  "file": "receipt-24-au.jpg",
+  "wrong": [
+   "date",
+   "total",
+   "currency"
+  ],
+  "read": {
+   "category": "groceries",
+   "currency": "USD",
+   "date": "2026-03-08",
+   "date_printed": "03/08/2026",
+   "items": [
+    {
+     "amount": 5.99,
+     "description": "Eggs dozen",
+     "quantity": 1
+    }
+   ],
+   "payment_method": "cash",
+   "subtotal": 5.99,
+   "taxes": [
+    {
+     "amount": 0.54,
+     "name": "GST"
+    }
+   ],
+   "tip": null,
+   "total": 6.53,
+   "vendor": "COASTLINE GREEN GROCER"
+  },
+  "answer": {
+   "vendor": "Coastline Green Grocer",
+   "date": "2026-08-03",
+   "currency": "AUD",
+   "items": [
+    {
+     "description": "Eggs dozen",
+     "quantity": 1,
+     "amount": 5.99
+    }
+   ],
+   "subtotal": null,
+   "taxes": [
+    {
+     "name": "GST incl.",
+     "amount": 0.54
+    }
+   ],
+   "tip": null,
+   "total": 5.99,
+   "payment_method": "CASH",
+   "category": "groceries"
+  }
+ },
+ {
+  "file": "receipt-25-on.pdf",
+  "wrong": [
+   "currency"
+  ],
+  "read": {
+   "category": "office",
+   "currency": "USD",
+   "date": "2026-10-17",
+   "date_printed": "10/17/26",
+   "items": [
+    {
+     "amount": 18.99,
+     "description": "Paperback novel",
+     "quantity": 1
+    },
+    {
+     "amount": 4.79,
+     "description": "Screws pack",
+     "quantity": 1
+    },
+    {
+     "amount": 25.0,
+     "description": "Gift card",
+     "quantity": 1
+    }
+   ],
+   "payment_method": "card",
+   "subtotal": 48.78,
+   "taxes": [
+    {
+     "amount": 6.34,
+     "name": "HST"
+    }
+   ],
+   "tip": null,
+   "total": 55.12,
+   "vendor": "NORTHLINE HARDWARE"
+  },
+  "answer": {
+   "vendor": "Northline Hardware",
+   "date": "2026-10-17",
+   "currency": "CAD",
+   "items": [
+    {
+     "description": "Paperback novel",
+     "quantity": 1,
+     "amount": 18.99
+    },
+    {
+     "description": "Screws pack",
+     "quantity": 1,
+     "amount": 4.79
+    },
+    {
+     "description": "Gift card",
+     "quantity": 1,
+     "amount": 25.0
+    }
+   ],
+   "subtotal": 48.78,
+   "taxes": [
+    {
+     "name": "HST 13%",
+     "amount": 6.34
+    }
+   ],
+   "tip": null,
+   "total": 55.12,
+   "payment_method": "VISA ****4821",
+   "category": "other"
+  }
+ },
+ {
+  "file": "receipt-26-qc.jpg",
+  "wrong": [
+   "currency"
+  ],
+  "read": {
+   "category": "restaurant",
+   "currency": "USD",
+   "date": "2026-09-27",
+   "date_printed": "2026-09-27",
+   "items": [
+    {
+     "amount": 11.0,
+     "description": "Paneer tikka",
+     "quantity": 1
+    },
+    {
+     "amount": 5.25,
+     "description": "Fries",
+     "quantity": 1
+    },
+    {
+     "amount": 13.0,
+     "description": "Veg curry",
+     "quantity": 1
+    },
+    {
+     "amount": 14.95,
+     "description": "Club sandwich",
+     "quantity": 1
+    }
+   ],
+   "payment_method": "DEBIT",
+   "subtotal": 44.2,
+   "taxes": [
+    {
+     "amount": 2.21,
+     "name": "TPS/GST"
+    },
+    {
+     "amount": 4.41,
+     "name": "TVQ/QST"
+    }
+   ],
+   "tip": 7.96,
+   "total": 58.78,
+   "vendor": "CAFE LUMEN"
+  },
+  "answer": {
+   "vendor": "Cafe Lumen",
+   "date": "2026-09-27",
+   "currency": "CAD",
+   "items": [
+    {
+     "description": "Paneer tikka",
+     "quantity": 1,
+     "amount": 11.0
+    },
+    {
+     "description": "Fries",
+     "quantity": 1,
+     "amount": 5.25
+    },
+    {
+     "description": "Veg curry",
+     "quantity": 1,
+     "amount": 13.0
+    },
+    {
+     "description": "Club sandwich",
+     "quantity": 1,
+     "amount": 14.95
+    }
+   ],
+   "subtotal": 44.2,
+   "taxes": [
+    {
+     "name": "TPS/GST 5%",
+     "amount": 2.21
+    },
+    {
+     "name": "TVQ/QST 9.975%",
+     "amount": 4.41
+    }
+   ],
+   "tip": 7.96,
+   "total": 58.78,
+   "payment_method": "DEBIT",
+   "category": "restaurant"
+  }
+ }
+]
