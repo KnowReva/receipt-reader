@@ -1,0 +1,287 @@
+[
+ {
+  "file": "receipt-06-au.jpg",
+  "wrong": [
+   "currency"
+  ],
+  "read": {
+   "category": "travel",
+   "currency": "USD",
+   "date": "2026-02-14",
+   "date_printed": "14/02/2026",
+   "items": [
+    {
+     "amount": 24.6,
+     "description": "Fare",
+     "quantity": 1
+    },
+    {
+     "amount": 2.5,
+     "description": "Booking fee",
+     "quantity": 1
+    }
+   ],
+   "payment_method": "VISA",
+   "subtotal": 27.1,
+   "taxes": [
+    {
+     "amount": 2.46,
+     "name": "GST incl."
+    }
+   ],
+   "tip": null,
+   "total": 27.1,
+   "vendor": "SOUTHERN CROSS TAXIS"
+  },
+  "answer": {
+   "vendor": "Southern Cross Taxis",
+   "date": "2026-02-14",
+   "currency": "AUD",
+   "items": [
+    {
+     "description": "Fare",
+     "quantity": 1,
+     "amount": 24.6
+    },
+    {
+     "description": "Booking fee",
+     "quantity": 1,
+     "amount": 2.5
+    }
+   ],
+   "subtotal": null,
+   "taxes": [
+    {
+     "name": "GST incl.",
+     "amount": 2.46
+    }
+   ],
+   "tip": null,
+   "total": 27.1,
+   "payment_method": "VISA ****4821",
+   "category": "travel"
+  }
+ },
+ {
+  "file": "receipt-12-au.jpg",
+  "wrong": [
+   "date",
+   "tax",
+   "currency"
+  ],
+  "read": {
+   "vendor": "COASTLINE GREEN GROCER",
+   "date": "2026-09-02",
+   "date_printed": "09/02/2026",
+   "currency": "USD",
+   "items": [
+    {
+     "description": "Apples 1.5kg",
+     "quantity": 1,
+     "amount": 6.99
+    },
+    {
+     "description": "Whole milk 2L",
+     "quantity": 3,
+     "amount": 13.47
+    },
+    {
+     "description": "Bread loaf",
+     "quantity": 3,
+     "amount": 9.87
+    }
+   ],
+   "subtotal": 30.33,
+   "taxes": [
+    {
+     "name": "GST",
+     "amount": 2.76
+    }
+   ],
+   "tip": null,
+   "total": 30.33,
+   "payment_method": "cash",
+   "category": "groceries"
+  },
+  "answer": {
+   "vendor": "Coastline Green Grocer",
+   "date": "2026-02-09",
+   "currency": "AUD",
+   "items": [
+    {
+     "description": "Apples 1.5kg",
+     "quantity": 1,
+     "amount": 6.99
+    },
+    {
+     "description": "Whole milk 2L",
+     "quantity": 3,
+     "amount": 13.47
+    },
+    {
+     "description": "Bread loaf",
+     "quantity": 3,
+     "amount": 9.87
+    }
+   ],
+   "subtotal": null,
+   "taxes": [
+    {
+     "name": "GST incl.",
+     "amount": 2.76
+    }
+   ],
+   "tip": null,
+   "total": 30.33,
+   "payment_method": "CASH",
+   "category": "groceries"
+  },
+  "restored": "taxes as the model gave them (see the run's notes)"
+ },
+ {
+  "file": "receipt-18-au.jpg",
+  "wrong": [
+   "tax",
+   "currency"
+  ],
+  "read": {
+   "category": "groceries",
+   "currency": "USD",
+   "date": "2026-09-22",
+   "date_printed": "22/09/2026",
+   "items": [
+    {
+     "amount": 1.79,
+     "description": "Bananas 1kg",
+     "quantity": 1
+    },
+    {
+     "amount": 13.47,
+     "description": "Whole milk 2L",
+     "quantity": 3
+    },
+    {
+     "amount": 25.98,
+     "description": "Coffee beans",
+     "quantity": 2
+    },
+    {
+     "amount": 9.87,
+     "description": "Bread loaf",
+     "quantity": 3
+    },
+    {
+     "amount": 6.49,
+     "description": "Rice 2kg",
+     "quantity": 1
+    }
+   ],
+   "payment_method": "MASTERCARD",
+   "subtotal": 57.6,
+   "taxes": [
+    {
+     "name": "GST",
+     "amount": 5.24
+    }
+   ],
+   "tip": null,
+   "total": 57.6,
+   "vendor": "COASTLINE GREEN GROCER"
+  },
+  "answer": {
+   "vendor": "Coastline Green Grocer",
+   "date": "2026-09-22",
+   "currency": "AUD",
+   "items": [
+    {
+     "description": "Bananas 1kg",
+     "quantity": 1,
+     "amount": 1.79
+    },
+    {
+     "description": "Whole milk 2L",
+     "quantity": 3,
+     "amount": 13.47
+    },
+    {
+     "description": "Coffee beans",
+     "quantity": 2,
+     "amount": 25.98
+    },
+    {
+     "description": "Bread loaf",
+     "quantity": 3,
+     "amount": 9.87
+    },
+    {
+     "description": "Rice 2kg",
+     "quantity": 1,
+     "amount": 6.49
+    }
+   ],
+   "subtotal": null,
+   "taxes": [
+    {
+     "name": "GST incl.",
+     "amount": 5.24
+    }
+   ],
+   "tip": null,
+   "total": 57.6,
+   "payment_method": "MASTERCARD ****1177",
+   "category": "groceries"
+  },
+  "restored": "taxes as the model gave them (see the run's notes)"
+ },
+ {
+  "file": "receipt-24-au.jpg",
+  "wrong": [
+   "date",
+   "tax",
+   "currency"
+  ],
+  "read": {
+   "vendor": "COASTLINE GREEN GROCER",
+   "date": "2026-08-03",
+   "date_printed": "03/08/2026",
+   "currency": "USD",
+   "items": [
+    {
+     "description": "Eggs dozen",
+     "quantity": 1,
+     "amount": 5.99
+    }
+   ],
+   "subtotal": null,
+   "taxes": [],
+   "tip": null,
+   "total": 5.99,
+   "payment_method": "cash",
+   "category": "groceries"
+  },
+  "answer": {
+   "vendor": "Coastline Green Grocer",
+   "date": "2026-08-03",
+   "currency": "AUD",
+   "items": [
+    {
+     "description": "Eggs dozen",
+     "quantity": 1,
+     "amount": 5.99
+    }
+   ],
+   "subtotal": null,
+   "taxes": [
+    {
+     "name": "GST incl.",
+     "amount": 0.54
+    }
+   ],
+   "tip": null,
+   "total": 5.99,
+   "payment_method": "CASH",
+   "category": "groceries"
+  },
+  "restored": "date as the model gave it (see the run's notes)"
+ }
+]

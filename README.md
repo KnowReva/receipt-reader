@@ -156,6 +156,14 @@ with no city or ABN to tell Australia from Canada or New Zealand. Practice recei
 as real ones do. The arithmetic check can't catch a wrong currency, so use `--currency` for your own
 receipts. Time: about 100 seconds a receipt. With the model's "thinking" left on, it was 216.
 
+**With `--fast`** (Tesseract first, `--text-model qwen3:4b-instruct-2507-q4_K_M` for the text, `gemma4:26b`
+for the pictures; version 0.3.4, same NUC, same practice receipts): 47 seconds a receipt, two to three
+times faster. 22 of 30 were read from the text alone. All five fields right on 26/30, every total
+right. The 4 misses were all one thing: Australian practice receipts from an older set, whose only
+currency clue was "GST incl."; 0.3.5 reads that clue, and replaying those 4 readings gives 3 right and
+1 marked CHECK. The same run showed the default `qwen2.5vl:7b` is the weak link for accuracy here
+(21/30 without `--fast`): with Dhoon's `gemma4:26b` installed, use it.
+
 **On a real receipt** (a crumpled Walmart grocery receipt from Kitchener, Ontario), testing found
 five mistakes the practice set never showed. All five are now handled:
 

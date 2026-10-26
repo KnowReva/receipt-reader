@@ -1,5 +1,14 @@
 # Changes
 
+## 0.3.5 (October 2026)
+
+From the second `eval --fast` run (0.3.4: 26/30 all right, every total right, 47 s a receipt):
+- "GST incl." is a clue for AUD (Canada adds its GST on top; the USA has none). The 4 misses were
+  Australian receipts whose only clue it was; replayed, 3 right and 1 CHECK.
+- No false alarm on VAT receipts that print a subtotal before tax: when the items add up to the
+  total, the tax is in them, as printed (3 right readings had been flagged).
+- A receipt that prints an included tax while the reading has none is marked CHECK.
+
 ## 0.3.4 (October 2026)
 
 From `eval --fast --details` on the practice set (12 wrong, none flagged), two more checks:

@@ -70,6 +70,7 @@ def drop_unprinted_tax(r: dict) -> list[str]:
 STRONG = [
     ("CAD", r"\bGST/HST\b|\bHST\b|\bTPS\b|\bTVQ\b|\bQST\b|\bRT ?0001\b|\bTQ ?0001\b"),
     ("AUD", r"\bABN\b"),
+    ("AUD", r"\bGST\s+incl"),  # Canada adds its GST on top and the USA has none: "GST incl." is Australian
     ("EUR", r"€|\bEUR\b|\bMwSt\b|\bTVA\b|\bIVA\b|\bBTW\b|\bUSt\b"),
     ("INR", r"₹|\bRs\.?\s?\d|\bINR\b|\bCGST\b|\bSGST\b|\bGSTIN\b"),
     ("GBP", r"£|\bGBP\b"),
@@ -243,10 +244,15 @@ def problems(r: dict, today: dt.date | None = None, file_day: dt.date | None = N
                      f"{100 * taxes / total:.0f}%): check the tax lines")  # fmt: skip
     elif added and base and taxes > 0.30 * base:
         found.append(f"tax {taxes:.2f} is more than 30% of {base:.2f}: check the tax lines")
-    if text and taxes and total and base is not None and added and not included and INCLUDED.search(text):
+    items_are_total = items_sum is not None and close(items_sum, total) if total else False
+    if (text and taxes and total and base is not None and added and not included and not items_are_total
+            and INCLUDED.search(text)):  # (items adding up to the total: the tax is in them, as printed)
         line = INCLUDED.search(text).group(0).strip()[:40]
         found.append(f"the receipt says the tax is included (\"{line}\"), but this reading adds {taxes:.2f} on "
                      "top: check the total")  # fmt: skip
+    if text and not taxes and total and INCLUDED.search(text):
+        line = INCLUDED.search(text).group(0).strip()[:40]
+        found.append(f"the receipt prints a tax line (\"{line}\") but this reading has no tax: check the tax")
     if total and base is not None and not (added or included) and not any(p.startswith("tax ") for p in found):
         found.append(f"{'subtotal' if subtotal is not None else 'items'} {base:.2f} + tax {taxes:.2f}"
                      f"{f' + tip {tip:.2f}' if tip else ''} = {base + taxes + tip:.2f}, not the total {total:.2f}")  # fmt: skip

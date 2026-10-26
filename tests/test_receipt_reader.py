@@ -561,3 +561,27 @@ def test_the_twelve_wrong_readings_of_october_26_are_now_right_or_flagged(photo,
     assert outcome["receipt-14-qc.jpg"] == "flagged"  # printed "2026-05-97": not a real date
     assert outcome["receipt-24-au.jpg"] == "flagged"  # "GST incl." but the total had it added: 6.53, not 5.99
     assert list(outcome.values()).count("right") == 9
+
+
+def test_the_four_wrong_readings_of_the_second_run_and_no_false_alarms(photo, monkeypatch):
+    """The second eval --fast run (0.3.4): 26/30 right; the 4 wrong were Australian practice receipts from
+    before they printed a city and ABN: "GST incl." was their only clue. And 3 right ones were flagged:
+    VAT receipts that print a subtotal before tax, which the included-tax check took for tax added."""
+    from pathlib import Path
+
+    cases = json.loads((Path(__file__).parent / "data" / "why-fast-2-2026-10-26.json").read_text())
+    outcome = {}
+    for case in cases:
+        tax = case["answer"]["taxes"][0]["amount"]
+        monkeypatch.setattr(files, "recognise", lambda path, t=tax: f"COASTLINE GREEN GROCER\n12 Beach Road\nGST incl. ${t}")
+        got = reader.read(photo, chat=stand_in(case["read"]), today=TODAY, remember=False)
+        right = all(evaluate.compare(got, case["answer"]).values())
+        outcome[case["file"]] = "right" if right else ("flagged" if got["status"] == "check" else "WRONG")
+    assert outcome == {"receipt-06-au.jpg": "right", "receipt-12-au.jpg": "right", "receipt-18-au.jpg": "right",
+                       "receipt-24-au.jpg": "flagged"}, outcome  # 24: "GST incl." printed, no tax read  # fmt: skip
+    # a VAT receipt read right, with its net subtotal: no false alarm
+    vat = dict(GOOD, currency="EUR", items=[{"description": "Cheese", "quantity": 1, "amount": 14.38}],
+               subtotal=13.44, taxes=[{"name": "MwSt 7% incl.", "amount": 0.94}], total=14.38)  # fmt: skip
+    assert checks.problems(vat, TODAY, text="Rotterdam\nMwSt 7% incl. 0.94") == []
+    added = dict(vat, items=[{"description": "Cheese", "quantity": 1, "amount": 13.44}], total=14.38)
+    assert any("says the tax is included" in p for p in checks.problems(added, TODAY, text="MwSt 7% incl. 0.94"))
