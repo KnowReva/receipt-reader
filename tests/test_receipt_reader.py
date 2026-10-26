@@ -356,7 +356,7 @@ def test_a_broken_or_cut_off_answer_gets_the_second_look(photo, monkeypatch):
     r = reader.read(photo, chat=model.chat, today=TODAY)
     assert r["status"] == "ok" and r["vendor"] == "Maple Corner Grocery" and len(sent) == 2
     assert "cut off (done_reason: length)" in sent[1]["messages"][0]["content"]
-    assert sent[0]["options"]["num_ctx"] == model.CONTEXT == 8192
+    assert "num_ctx" not in sent[0]["options"]  # the server's own context: no reload of a shared model
     assert len(sent[1]["messages"]) == 1  # a new single-message request, not a growing conversation
     monkeypatch.setattr(model.urllib.request, "urlopen", lambda req, timeout: reply("not json"))
     with pytest.raises(model.BadAnswer, match="wasn't valid JSON"):
@@ -492,3 +492,18 @@ def test_eval_details_show_the_wrong_readings(tmp_path):
     evaluate.run(tmp_path, chat=stand_in(wrong), today=TODAY, say=lambda *a: None, details=tmp_path / "why.json")
     got = json.loads((tmp_path / "why.json").read_text())
     assert len(got) == 2 and "total" in got[0]["wrong"] and got[0]["read"]["total"] == 999.0 and "answer" in got[0]
+
+
+def test_a_context_size_is_sent_only_when_you_set_it(monkeypatch):
+    sent = {}
+
+    def urlopen(req, timeout):
+        sent.update(json.loads(req.data))
+        return FakeResponse(json.dumps({"message": {"content": json.dumps(GOOD)}, "done_reason": "stop"}).encode())
+
+    monkeypatch.setattr(model.urllib.request, "urlopen", urlopen)
+    model.chat([{"role": "user", "content": "hi"}], {})
+    assert "num_ctx" not in sent["options"]
+    monkeypatch.setattr(model, "CONTEXT", 8192)
+    model.chat([{"role": "user", "content": "hi"}], {})
+    assert sent["options"]["num_ctx"] == 8192

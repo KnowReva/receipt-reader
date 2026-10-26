@@ -10,9 +10,11 @@ import urllib.request
 
 DEFAULT_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 DEFAULT_MODEL = os.environ.get("RECEIPT_MODEL", "qwen2.5vl:7b")
-# The context window holds the prompt, the image's tokens and the answer. Ollama's default is 4096
-# tokens; a long receipt photo plus dozens of items can need more.
-CONTEXT = int(os.environ.get("RECEIPT_CONTEXT", "8192"))
+# The context window holds the prompt, the image's tokens and the answer. Not sent unless you set it:
+# a request with a different size than the server's makes Ollama reload the whole model, and if other
+# programs share Ollama (Dhoon runs it with 16-32k) it reloads again for them: minutes each time. If
+# your Ollama runs with its plain default (4096) and long receipts get cut off, set RECEIPT_CONTEXT=8192.
+CONTEXT = int(os.environ.get("RECEIPT_CONTEXT", "0") or 0)
 
 
 class ModelError(RuntimeError):
@@ -33,7 +35,7 @@ def chat(messages: list[dict], schema: dict, model: str = DEFAULT_MODEL, url: st
         "stream": False,
         "think": False,  # thinking models (gemma4, qwen3...) answer straight away: many times faster
         "options": {"temperature": 0,  # the same receipt should give the same answer every time
-                    "num_ctx": CONTEXT},
+                    **({"num_ctx": CONTEXT} if CONTEXT else {})},
     }
     request = urllib.request.Request(f"{url.rstrip('/')}/api/chat", data=json.dumps(body).encode(),
                                      headers={"Content-Type": "application/json"})  # fmt: skip
@@ -56,7 +58,7 @@ def chat(messages: list[dict], schema: dict, model: str = DEFAULT_MODEL, url: st
     reason = reply.get("done_reason") or "stop"
     if reason != "stop":
         raise BadAnswer(f"the model's answer was cut off (done_reason: {reason}); a bigger context may help: "
-                        f"RECEIPT_CONTEXT={CONTEXT * 2}")  # fmt: skip
+                        f"RECEIPT_CONTEXT={CONTEXT * 2 if CONTEXT else 8192}")  # fmt: skip
     try:
         answer = json.loads(reply["message"]["content"])
     except (KeyError, TypeError, json.JSONDecodeError) as e:

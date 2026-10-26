@@ -65,8 +65,10 @@ Microsoft Lens...) carry text the app guessed from the photo, with mistakes, so 
 too, with that text as a hint. iPhone photos (HEIC) are read as they are.
 
 Settings: `--model` (or `RECEIPT_MODEL`), `--url` (or `OLLAMA_URL`, default
-`http://localhost:11434`), `RECEIPT_CONTEXT` (the model's context window in tokens, default 8192;
-Ollama's own default is 4096, which a long receipt photo can outgrow).
+`http://localhost:11434`), `RECEIPT_CONTEXT` (the model's context window in tokens; not sent unless
+set, because a size different from the server's makes Ollama reload the whole model, and again for
+any other program sharing it. Set 8192 only if your Ollama runs with its default of 4096 and long
+receipts get cut off).
 
 An answer that isn't complete JSON (cut off, or broken) gets the same one second look as a receipt
 that doesn't add up.

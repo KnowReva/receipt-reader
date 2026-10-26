@@ -1,5 +1,11 @@
 # Changes
 
+## 0.3.2 (October 2026)
+
+- The context window is no longer sent by default. Asking for 8192 on every request made Ollama reload
+  the whole model whenever its server ran with another size (Dhoon's runs with 16-32k), and again for
+  the other programs sharing it: minutes per receipt. `RECEIPT_CONTEXT` sets one when you need it.
+
 ## 0.3.1 (October 2026)
 
 - Dates are put in order by code from the date as printed (a new field, `date_printed`): a number over 12
