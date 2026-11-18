@@ -26,3 +26,7 @@ Source = "https://github.com/knowreva/receipt-reader"
 
 [tool.setuptools]
 packages = ["receipt_reader"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

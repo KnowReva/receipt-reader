@@ -8,3 +8,8 @@ samples/
 receipts.csv
 items.csv
 *.json.out
+.ruff_cache/
+.DS_Store
+*~
+*.swp
+*.bak
